@@ -1,0 +1,17 @@
+Cycles,Denature_temp,Anneal_temp,Extension_Temp,Denature_time,Anneal_time,Extension_Time,Template_Conc,Primer_Conc,dNTP,Polymerase_Enzyme,Polymerase_conc,Condition_id,DataPointType,Well,Plate,Yield,Purity,Time
+32,80,55,65,15,5,10,100,2,0.2,Taq,0.5,1,Plackett_Burman,B2,1,0,3.5,26
+32,99,55,65,2,15,10,20,2,1,Phusion,2,2,Plackett_Burman,B4,1,226.8,92.7,24.4
+32,99,70,65,2,5,30,20,0.5,1,Taq,0.5,3,Plackett_Burman,B6,1,0,2.9,29.7
+32,99,70,80,2,5,10,100,0.5,0.2,Taq,2,4,Plackett_Burman,B8,1,0,0.1,19.1
+10,99,70,80,15,5,10,20,2,0.2,Phusion,2,5,Plackett_Burman,B10,1,0,0,15
+32,80,70,80,15,15,10,20,0.5,1,Phusion,0.5,6,Plackett_Burman,B12,1,0,1.8,31.3
+10,99,55,80,15,15,30,20,0.5,0.2,Taq,0.5,7,Plackett_Burman,B14,1,0,0,20
+32,80,70,65,15,15,30,100,0.5,0.2,Phusion,2,8,Plackett_Burman,B16,1,2.6,56.7,42
+32,99,55,80,2,15,30,100,2,0.2,Phusion,0.5,9,Plackett_Burman,B18,1,0,0.1,35.1
+10,99,70,65,15,5,30,100,2,1,Phusion,0.5,10,Plackett_Burman,B20,1,21.8,53.4,18.3
+10,80,70,80,2,15,10,100,2,1,Taq,0.5,11,Plackett_Burman,B22,1,0,4.3,14.5
+32,80,55,80,15,5,30,20,2,1,Taq,2,12,Plackett_Burman,D2,1,0.2,5.3,36.7
+10,99,55,65,15,15,10,100,0.5,1,Taq,2,13,Plackett_Burman,D4,1,0,9.2,16.7
+10,80,70,65,2,15,30,20,2,0.2,Taq,2,14,Plackett_Burman,D6,1,0,1.6,17.8
+10,80,55,80,2,5,30,100,0.5,1,Phusion,2,15,Plackett_Burman,D8,1,0,9.9,16.2
+10,80,55,65,2,5,10,20,0.5,0.2,Phusion,0.5,16,Plackett_Burman,D10,1,0,4.7,12.8

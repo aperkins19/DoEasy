@@ -1,0 +1,11 @@
+{
+    "Template": {
+        "Well_Type": "Experiment",
+        "DNA_Template": "T7_GFP",
+        "Lysate_Inventory_Record": "Lysate_013",
+        "Energy_Solution": "D_ES_1",
+        "Lysate_Owner": "AP"
+        }
+
+}
+

@@ -1,0 +1,98 @@
+{
+    "Experiment_Name": "PCR_Simulation_Plackett_Burman_#1",
+    "Design_Type": "Plackett_Burman",
+    "Randomise": 0,
+    "Technical_Replicates" : 1,
+    "Well_Spacing": 1,
+    "Variables": {
+        "Cycles":{
+            "Type": "Continuous",
+            "Max": 32,
+            "Min": 10,
+            "Units": "X"
+        },
+        "Denature_temp":{
+            "Type": "Continuous",
+            "Max": 99,
+            "Min": 80,
+            "Units": "Degrees_C"
+        },
+        "Anneal_temp":{
+            "Type": "Continuous",
+            "Max": 70.0,
+            "Min": 55.0,
+            "Units": "Degrees_C"
+        },
+        "Extension_Temp":{
+            "Type": "Continuous",
+            "Max": 80.0,
+            "Min": 65.0,
+            "Units": "Degrees_C"
+        },
+        "Denature_time":{
+            "Type": "Continuous",
+            "Max": 15.0,
+            "Min": 2.0,
+            "Units": "Seconds"
+        },
+        "Anneal_time":{
+            "Type": "Continuous",
+            "Max": 15.0,
+            "Min": 5.0,
+            "Units": "Seconds"
+        },
+        "Extension_Time":{
+            "Type": "Continuous",
+            "Max": 30.0,
+            "Min": 10.0,
+            "Units": "Seconds"
+        },
+        "Template_Conc":{
+            "Type": "Continuous",
+            "Max": 100.0,
+            "Min": 20.0,
+            "Units": "ng/ul"
+        },
+        "Primer_Conc":{
+            "Type": "Continuous",
+            "Max": 2.0,
+            "Min": 0.5,
+            "Units": "ul (from 10 uM stock)"
+        },
+        "dNTP":{
+            "Type": "Continuous",
+            "Max": 1.0,
+            "Min": 0.2,
+            "Units": "ul (from 10 mM stock)"
+        },
+        "Polymerase_Enzyme":{
+            "Type": "Discrete",
+            "Max": "Taq",
+            "Min": "Phusion",
+            "Units": "Polymerase Type"
+        },
+        "Polymerase_conc":{
+            "Type": "Continuous",
+            "Max": 2.0,
+            "Min": 0.5,
+            "Units": "U"
+        }
+    },
+    "Response_Variables": {
+        "Yield":{
+            "Type": "Continuous",
+            "Units": "ng/ul"
+        },
+	"Purity":{
+		"Type": "Continuous",
+		"Units": "%"
+	},
+	"Time":{
+		"Type": "Continuous",
+		"Units": "Minutes"
+	}
+    },
+
+    "Reference_Condition": ""
+    
+}

@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+
+  doeasy:
+    build: .
+    image: doeasy
+    container_name: doeasy
+    ports:
+      - 7001:7001
+
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+
+    volumes:
+      - ./:/app
+  

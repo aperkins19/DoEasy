@@ -1,0 +1,17 @@
+Cycles,Denature_temp,Anneal_temp,Extension_Temp,Denature_time,Anneal_time,Extension_Time,Template_Conc,Primer_Conc,dNTP,Polymerase_Enzyme,Polymerase_conc,DataPointType,Condition_id
++,-,-,-,+,-,-,+,+,-,+,-,Plackett_Burman,1
++,+,-,-,-,+,-,-,+,+,-,+,Plackett_Burman,2
++,+,+,-,-,-,+,-,-,+,+,-,Plackett_Burman,3
++,+,+,+,-,-,-,+,-,-,+,+,Plackett_Burman,4
+-,+,+,+,+,-,-,-,+,-,-,+,Plackett_Burman,5
++,-,+,+,+,+,-,-,-,+,-,-,Plackett_Burman,6
+-,+,-,+,+,+,+,-,-,-,+,-,Plackett_Burman,7
++,-,+,-,+,+,+,+,-,-,-,+,Plackett_Burman,8
++,+,-,+,-,+,+,+,+,-,-,-,Plackett_Burman,9
+-,+,+,-,+,-,+,+,+,+,-,-,Plackett_Burman,10
+-,-,+,+,-,+,-,+,+,+,+,-,Plackett_Burman,11
++,-,-,+,+,-,+,-,+,+,+,+,Plackett_Burman,12
+-,+,-,-,+,+,-,+,-,+,+,+,Plackett_Burman,13
+-,-,+,-,-,+,+,-,+,-,+,+,Plackett_Burman,14
+-,-,-,+,-,-,+,+,-,+,-,+,Plackett_Burman,15
+-,-,-,-,-,-,-,-,-,-,-,-,Plackett_Burman,16

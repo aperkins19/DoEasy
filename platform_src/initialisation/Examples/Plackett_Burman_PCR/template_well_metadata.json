@@ -1,0 +1,13 @@
+{
+    "Template": {
+        "DNA_Template": "ATCGTGCTGATCGTAGCTAG"
+        },
+   "FWD_Primer": {
+	"Seq": "GATGATGGATG"
+	},
+   "REV_Primer": {
+	"Seq" : "GTAATTAGCT"
+	}
+
+}
+

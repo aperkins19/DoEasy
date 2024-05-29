@@ -1,0 +1,37 @@
+{
+    "Experiment_Name": "Placeholder_Name",
+    "Design_Type": "CCD",
+    "Randomise": 0,
+    "Technical_Replicates" : 3,
+    "Well_Spacing": 1,
+    "Generate_Validation_Points" : 0,
+    "Variables": {
+        "X1":{
+            "Type": "Continuous",
+            "Max": 12,
+            "Min": 4,
+            "Units": "mM"
+        },
+        "X2":{
+            "Type": "Continuous",
+            "Max": 130.0,
+            "Min": 80.0,
+            "Units": "mM"
+        },
+        "X3":{
+            "Type": "Continuous",
+            "Max": 1.5,
+            "Min": 0.5,
+            "Units": "mM"
+        }
+    },
+    "Response_Variables": {
+        "Y1":{
+            "Type": "Continuous",
+            "Units": ""
+        }
+    },
+
+    "Reference_Condition": "Not Designated"
+    
+}
