@@ -9,7 +9,7 @@ import seaborn as sns
 
 import sys
 import json
-import math
+
 
 from sub_scripts.response_surface_methadology_modelling import LinearModel, PolyModel
 
@@ -20,10 +20,6 @@ project_path = sys.argv[1]
 savepath = sys.argv[2]
 feature_to_model = sys.argv[3]
 
-print()
-print("feature to model")
-print(feature_to_model)
-print()
 
 # Load the CSV file
 file_path = project_path + "Datasets/tidy_dataset.csv"  # Replace with your CSV file path
@@ -98,24 +94,9 @@ plt.clf()
 
 ###############################
 # noise of all conditions
-
-print(tidy_data)
-# Calculate the SEM for each Condition_id
-sem_values = tidy_data.groupby('Condition_id')[feature_to_model].sem().reset_index(name='SEM')
-
-# Calculate the Mean for each Condition_id
-mean_values = tidy_data.groupby('Condition_id')[feature_to_model].mean().reset_index(name='Mean')
-
-
-# Merge the SEM values back into the original DataFrame
-tidy_data = tidy_data.merge(sem_values, on='Condition_id')
-
-# Merge the Mean values back into the original DataFrame
-tidy_data = tidy_data.merge(mean_values, on='Condition_id')
-
-
+fontsize = 20
 # Define your desired figsize (width, height in inches)
-figsize = (12, 5)
+figsize = (10, 6)
 plt.figure(figsize=figsize)
 fig, ax = plt.subplots(figsize=figsize)
 
@@ -124,98 +105,36 @@ sns.barplot(
     x="Condition_id",
     y=feature_to_model,
     color="black",
-    alpha=0.5,
-    errorbar=None,
+    alpha=0.75,
+    errcolor="red",
     ax=ax
     )
 
+if design_parameters_dict["Technical_Replicates"] > 1:
 
-#### add error bars
-# Get the current axis
-ax = plt.gca()
+    sns.stripplot(
+        data= tidy_data,
+        x="Condition_id",
+        y=feature_to_model,
+        jitter=True,  # Jitter helps in spreading out the points
+        alpha=1,
+        color="g",
+        size=10,
+        dodge=True,
+        ax=ax
+        )
 
-# Calculate the positions of the bars to know where to place the error bars
-bar_centers = [p.get_x() + p.get_width() / 2 for p in ax.patches]
+ax.set_yticks(np.round(np.linspace(0,tidy_data[feature_to_model].max()*1.2,4),2))
 
-# Calculate the mean
-# Manually add the error bars using the pre-calculated SEM values
-ax.errorbar(
-    x=bar_centers,
-    y=list(tidy_data["Mean"].unique()),
-    yerr=list(tidy_data["SEM"].unique()),
-    fmt='none',
-    capsize=5,
-    capthick = 3,
-    color='black',
-    elinewidth = 3
-    )
-
-##### add real data points
-
-sns.stripplot(
-    data=tidy_data,
-    x="Condition_id",
-    y=feature_to_model,
-    jitter=0.3,  # Jitter helps in spreading out the points
-    alpha=0.7,
-    size=12,
-    dodge=True,
-    marker="o",
-    color = "red",
-    ax=ax
-)
-
-## add base line
-
-# calculate sem of GFP baseline
-baseline = pd.Series([46.39, 45.77, 47.32])
-
-# Define the top and bottom boundaries for the shaded area on the y-axis
-y_bottom = baseline.mean() - baseline.sem()
-y_top = baseline.mean() + baseline.sem()
-
-print()
-print(baseline.mean() + baseline.sem())
-print(baseline.mean())
-print(baseline.mean() - baseline.sem())
-
-# Add a horizontal line at y = value
-ax.axhline(y=baseline.mean(), color='black', alpha=1, linestyle='--').set_dashes([10, 5])
+ax.set_xlabel('Condition ID', fontsize=fontsize)
+# Keep the existing x-tick labels but change their fontsize
+ax.tick_params(axis='x', labelsize=fontsize)
+ax.tick_params(axis='y', labelsize=fontsize)
 
 
-baseline_x = np.arange(
-    (tidy_data["Condition_id"].min() -2),
-    (tidy_data["Condition_id"].max()+1),
-    1
-    )
+plt.ylabel(feature_to_model +" ("+ design_parameters_dict["Response_Variables"][feature_to_model]["Units"] + ")", fontsize = fontsize)
 
-# # Add a horizontal shaded area across the plot
-# ax.fill_between(
-#     x = baseline_x,
-#     y1 = y_bottom,
-#     y2 = y_top,
-#     color = 'black',
-#     alpha = 0.3
-#     )
-
-# Remove x-ticks and labels
-ax.set_xticks([])
-ax.set_xticklabels([])
-ax.set_xlabel('')
-
-y_ceil = math.ceil(baseline.mean() * 2)
-
-ax.set_yticks([0, math.ceil(baseline.mean()), 90])
-ax.tick_params(axis='y', labelsize=20)
-
-plt.ylabel((feature_to_model + " (" + design_parameters_dict["Response_Variables"][feature_to_model]["Units"] +")"), fontsize = 20)
-
-ax.set_xlim(
-    (tidy_data["Condition_id"].min()-1.5),
-    (tidy_data["Condition_id"].max()-0.5)
-    )
-
-#plt.title("Protein Yield of Each Condition (Mean & 95% CI)")
+plt.title(feature_to_model + " of Each Condition (Mean & 95% CI)", fontsize = fontsize)
 
 plt.tight_layout()
 

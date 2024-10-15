@@ -3,6 +3,129 @@ import numpy as np
 import sympy as sy
 
 from scipy.optimize import curve_fit
+from sklearn.metrics import mean_squared_error
+
+
+
+class NaturalLogFitter:
+    """
+    A class for fitting data to a Natural Log function and performing related operations.
+
+    This class provides methods for fitting data to a Natural Log function, predicting values using
+    the fitted parameters, and calculating derivatives and specific points of interest from the function.
+
+    Attributes:
+    params (tuple or None): Fitted parameters obtained after performing curve fitting.
+                           None if fitting hasn't been performed yet.
+    """
+
+    def __init__(self):
+        """
+        Initialize a NaturalLogFitter object.
+
+        Initializes the instance with no fitted parameters.
+        """
+
+        self.params = None
+
+    def natural_log_function(self, x, a, b):
+        """
+        Calculate the value of a Natural Log function.
+
+        Parameters:
+        t (array-like): Array of t values at which to calculate the function.
+        a, b, c (float): Parameters of the natural_log_function function.
+
+        Returns:
+        ndarray: Array of function values corresponding to the input t values.
+        """
+        return a * np.log(x) + b
+
+
+    def fit(self, x, y):
+        """
+        Fit data to the Natural Log function.
+
+        Parameters:
+        t (array-like): Array of t values representing the independent variable.
+        y (array-like): Array of y values representing the dependent variable.
+
+        Side Effects:
+        - Updates the 'params' attribute with the fitted parameters.
+        """
+        self.params, _ = curve_fit(self.natural_log_function, x, y)
+
+        self.mse = mean_squared_error(y, self.predict(x))
+
+
+    def get_parameters(self):
+        """
+        Get the fitted parameters of the Natural Log function.
+
+        Returns the fitted parameters obtained after performing the curve fitting process.
+
+        Returns:
+        tuple: Fitted parameters (a, b) of the Natural Log function.
+
+        Raises:
+        ValueError: If fitting has not been performed yet, raise an error.
+        """
+        if self.params is None:
+            raise ValueError("Fit not performed yet. Call the 'fit' method first.")
+        return self.params
+
+    def predict(self, x):
+        """
+        Predict y values using the fitted Natural Log function.
+
+        Calculates predicted y values using the fitted parameters and the Natural Logd function
+        for the given t values.
+
+        Parameters:
+        t (array-like): Array of t values for which to predict y values.
+
+        Returns:
+        ndarray: Array of predicted y values corresponding to the input t values.
+
+        Raises:
+        ValueError: If fitting has not been performed yet, raise an error.
+        """
+        if self.params is None:
+            raise ValueError("Fit not performed yet. Call the 'fit' method first.")
+
+        a_fit, b_fit = self.params
+
+        return self.natural_log_function(x, a_fit, b_fit)
+
+
+    def get_fit_metrics(self, x, y):
+
+        self.mse = mean_squared_error(y, self.predict(x))
+
+
+    def get_max_yield(self, x):
+
+        """
+        Returns the maximum yield value predicted by the fitted Natural Log function.
+
+        Calculates the predicted yield values using the fitted parameters and the Natural Log function,
+        and returns the maximum yield value and its corresponding x value from the input array `x`.
+
+        Parameters:
+        x (array-like): Array of x values for which to calculate the predicted yield.
+
+        Returns:
+        float: X value corresponding to the maximum predicted yield.
+        float: Maximum predicted yield value.
+        """
+
+        if self.params is None:
+            raise ValueError("Fit not performed yet. Call the 'fit' method first.")
+
+        a_fit, b_fit = self.params
+        y = self.natural_log_function(x, a_fit, b_fit)
+
+        return x[-1], y[-1]
 
 
 
@@ -92,6 +215,9 @@ class GompertzFitter:
 
         return self.gompertz_function(x, a_fit, b_fit, c_fit)
 
+    def get_fit_metrics(self, x, y):
+
+        self.mse = mean_squared_error(y, self.predict(x))
 
     def get_max_yield(self, x):
 
@@ -297,6 +423,12 @@ class AsymmetricSigmoidFitter:
         a_fit, b_fit, c_fit, d_fit = self.params
         
         return self.asymmetric_sigmoid(x, a_fit, b_fit, c_fit, d_fit)
+
+
+    def get_fit_metrics(self, x, y):
+
+        self.mse = mean_squared_error(y, self.predict(x))
+
 
     def get_max_yield(self, x):
 

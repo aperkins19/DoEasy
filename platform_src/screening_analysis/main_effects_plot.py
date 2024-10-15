@@ -10,7 +10,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import statsmodels.api as sm 
 
-from sub_scripts.modelling import generate_feature_matrix, ANOVA_Model, LinearRegression_Model
+from sub_scripts.modelling import generate_feature_matrix, LinearRegressionModel
 
 
 # Function to calculate the effect of each factor
@@ -145,6 +145,9 @@ def Anova(numeric_coded_design_with_response_values: pd.DataFrame, model_terms: 
 
 #import the project path 
 project_path = sys.argv[1]
+model_path = sys.argv[1]
+
+
 
 # import design parameters
 design_parameters_dict = json.load(open(project_path + "design_parameters.json", "r"))
@@ -178,108 +181,28 @@ input_matrix = numeric_coded_design_with_response_values[input_variables].copy()
 
 feature_matrix = generate_feature_matrix(input_matrix, model_terms)
 
-print()
-print("feature_matrix")
-print(feature_matrix)
-print()
 
 model_matrix = feature_matrix.copy()
 model_matrix[response_variables] = coded_design_with_response_values[response_variables]
 
-model_matrix.to_csv("test.csv")
 
-LinearRegression_Model(
-    df = model_matrix,
-    input_variables = input_variables,
-    model_features = model_terms,
-    response_variable = response_variables[0],
-    design_parameters_dict = design_parameters_dict,
-    Anova_Type = 2
-    )
-"""
-ANOVA_Model(
-    df = model_matrix,
-    model_features = model_terms,
-    response_variable = response_variables[0],
-    design_parameters_dict = design_parameters_dict,
-    Anova_Type=2
-    )
-"""
-# anova
-#result_table = Anova(numeric_coded_design_with_response_values, model_terms, response_variables, design_parameters_dict)
-#print(result_table)
-
-"""
+## all response variables
+for response_variable in response_variables:
 
 
-# Create a horizontal bar plot
-plt.figure(figsize=(10, 6))  # Adjust the size of the figure as needed
-sns.barplot(y='index', x='PR(>F)', data=result_table, color='skyblue')
-plt.axvline(x=0.05, color='black', linewidth=1)  # y=0 corresponds to the x-axis
-plt.title('P-Values of F-statistics of each interaction term')  # Add a title
-plt.xlabel('P-Value (F)')  # Label for the x-axis
-plt.ylabel('Interaction Terms')  # Label for the y-axis
-plt.tight_layout()
-plt.savefig(project_path+"Output/ANOVA_Results.png")
+    linear_model = LinearRegressionModel(
+        feature_matrix = model_matrix,
+        model_terms=model_terms,
+        input_variables = input_variables,
+        response_variable = response_variable,
+        design_parameters_dict = design_parameters_dict,
+        model_path = model_path
+        )
+
+    linear_model.fit()
 
 
+    linear_model.assess_fit_with_training_data()
+    significance_results = linear_model.model_term_significance_analysis(model_path, dont_plot_intercept=True, for_figure=True)
 
 
-
-
-
-
-# generate effects for each response variable
-effects_df = generate_effects_df(
-    coded_design_with_response_values = coded_design_with_response_values,
-    input_variables = input_variables,
-    response_variables = response_variables
-)
-
-# save the effects df
-effects_df.to_csv(project_path + "/Output/Main_Effects_Analysis.csv")
-
-# plot all effects
-# Number of plots
-num_subplots = effects_df.shape[1]
-
-# Determine the layout of the subplots
-rows = int(np.ceil(num_subplots / 2))  # Adjust the number of rows as needed
-cols = 2
-
-# Create the subplots
-fig, axes = plt.subplots(rows, cols, figsize=(10, rows * 4))
-
-# Flatten the axes array for easy indexing
-axes = axes.flatten()
-
-# Creating individual subplots
-for ax, (col_name, column_data) in zip(axes, effects_df.items()):
-
-
-    # convert series to df
-    plotting_df = column_data.reset_index()
-    plotting_df.columns = ["Factor", "Effect"]
-
-    # effects plot
-    sns.barplot(
-        data=plotting_df,
-        x = "Factor",
-        y = "Effect",
-        ax=ax)
-
-    ax.set_title(col_name)
-    ax.set_xlabel("Input Variables")
-    ax.tick_params(axis="x", rotation=90)
-    ax.set_xlabel("Factors")
-    ax.grid(axis="y")
-
-
-# Hide any unused subplots
-for j in range(num_subplots, len(axes)):
-    fig.delaxes(axes[j])
-
-fig.suptitle("Main Effects of the Input Variables to Each Response Variable")
-fig.tight_layout()
-fig.savefig(project_path + "/Output/Main_Effects_Plots.png")
-"""

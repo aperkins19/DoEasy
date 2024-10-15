@@ -32,19 +32,22 @@ model_params_dict = json.load(open(model_path + "model_params.json", "r"))
 model_terms = model_params_dict["model_terms"]
 
 # get variable name lists
-input_variables = list(design_parameters_dict["Variables"].keys())
+design_input_variables = list(design_parameters_dict["Variables"].keys())
 response_variables = list(design_parameters_dict["Response_Variables"].keys())
-
 
 
 # generate coded design with response values
 # first get the training data
 training_data = tidy_data[tidy_data["DataPointType"] != "Validation"].copy()
-input_matrix = training_data[input_variables].copy()
+input_matrix = training_data[design_input_variables].copy()
 feature_matrix = generate_feature_matrix(input_matrix, model_terms)
 
 # append Y
 feature_matrix[feature_to_model] = tidy_data[feature_to_model]
+
+# get trim the design input variables
+model_input_variables = [var for var in design_input_variables if var in model_terms]
+
 
 
 # # Merging coded_design with response variables from tidy_data via condition_id
@@ -66,10 +69,11 @@ feature_matrix[feature_to_model] = tidy_data[feature_to_model]
 # model_matrix = feature_matrix.copy()
 # model_matrix[response_variables] = coded_design_with_response_values[response_variables]
 
+
 model = LinearRegressionModel(
             feature_matrix = feature_matrix,
             model_terms = model_terms,
-            input_variables = input_variables,
+            input_variables = model_input_variables,
             response_variable=feature_to_model,
             design_parameters_dict = design_parameters_dict,
             model_path = model_path

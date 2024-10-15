@@ -17,7 +17,7 @@ import sys
 st.header('View DoE Data')
 
 model_type = st.selectbox(
-    "Select model type",
+    "Select Design Type",
     ("Second Order", 'First Order', 'Two Way Interaction', 'Pure Quadratic')
     )
 

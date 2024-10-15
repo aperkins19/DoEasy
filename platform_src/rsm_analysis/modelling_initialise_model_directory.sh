@@ -47,7 +47,7 @@ initialise_model_config_json(){
         echo "      \"plot_zero_surface\": true," >> $model_config_json_dir
         echo "      \"view_zero_surface_elevation\": 10," >> $model_config_json_dir
         echo "      \"view_zero_surface_azimuth\": 35," >> $model_config_json_dir
-        echo "      \"plot_ground_truth\": true," >> $model_config_json_dir
+        echo "      \"plot_ground_truth\": false," >> $model_config_json_dir
         echo "      \"Fig_Size_x\": 10," >> $model_config_json_dir
         echo "      \"Fig_Size_y\": 10," >> $model_config_json_dir
         echo "      \"Suptitle_font_size\": 10," >> $model_config_json_dir
@@ -57,7 +57,7 @@ initialise_model_config_json(){
         echo "    \"Contour\": {" >> $model_config_json_dir
         echo "      \"GIF\": true," >> $model_config_json_dir
         echo "      \"fps\": 0.5," >> $model_config_json_dir
-        echo "      \"plot_ground_truth\": true," >> $model_config_json_dir
+        echo "      \"plot_ground_truth\": false," >> $model_config_json_dir
         echo "      \"Grid\": true," >> $model_config_json_dir
         echo "      \"Grid_colour\": \"grey\"," >> $model_config_json_dir
         echo "      \"Grid_linestyle\": \"--\"," >> $model_config_json_dir
@@ -65,12 +65,22 @@ initialise_model_config_json(){
         echo "      \"Fig_Size_x\": 10," >> $model_config_json_dir
         echo "      \"Fig_Size_y\": 10," >> $model_config_json_dir
         echo "      \"Ticks_use_levels\": true," >> $model_config_json_dir
-        echo "      \"Ticks_label_size\": 20," >> $model_config_json_dir
-        echo "      \"Suptitle_font_size\": 20," >> $model_config_json_dir
-        echo "      \"Plot_title_font_size\": 20," >> $model_config_json_dir
-        echo "      \"Axis_label_font_size\": 20" >> $model_config_json_dir
+        echo "      \"Ticks_label_size\": 40," >> $model_config_json_dir
+        echo "      \"Suptitle_font_size\": 40," >> $model_config_json_dir
+        echo "      \"Plot_title_font_size\": 40," >> $model_config_json_dir
+        echo "      \"Axis_label_font_size\": 40" >> $model_config_json_dir
         echo "    }" >> $model_config_json_dir
-        echo "  }" >> $model_config_json_dir
+        echo "  }," >> $model_config_json_dir
+
+        echo "  \"Simulated_Annealing_Params\": {" >> $model_config_json_dir
+        echo "  \"Temperature\": 5," >> $model_config_json_dir
+        echo "  \"Cooling_Schedule\": 0.95," >> $model_config_json_dir
+        echo "  \"N_Proposals\": 100," >> $model_config_json_dir
+        echo "  \"particles\": 12000," >> $model_config_json_dir
+        echo "  \"Deep_Search\": 0," >> $model_config_json_dir
+        echo "  \"replicates\": 3," >> $model_config_json_dir
+        echo "  \"decimal_point_threshold\": 1" >> $model_config_json_dir
+        echo "}" >> $model_config_json_dir
         echo "}" >> $model_config_json_dir
 
     else
@@ -78,7 +88,7 @@ initialise_model_config_json(){
     fi
 
     # get unique levels
-    get_input_variables_and_unique_levels
+
 
 }
 
@@ -146,7 +156,7 @@ initialise_model_directory() {
     done
 
     ## initialise the model directory
-    newmodeldir="${modelsdirectory}/${modelname}"
+    newmodeldir="${modelsdirectory}/${modelname}/"
     mkdir -p "$newmodeldir"
     cp -r /app/platform_src/initialisation/Templates/Model_Template/* "$newmodeldir"
     ## initialise model config

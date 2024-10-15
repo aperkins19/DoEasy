@@ -103,10 +103,12 @@ df_normalized_T = df_normalized.reset_index(drop=True)
 df_normalized_T = df_normalized_T[variables_list]
 df_normalized_T = df_normalized_T.T
 
+print(df_normalized_T)
+
 
 
 # Set up the figure
-fig, ax = plt.subplots(figsize=(12, 2.5))
+fig, ax = plt.subplots(figsize=(10.8, 2.5))
 
 # Plot the heatmap
 

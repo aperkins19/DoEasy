@@ -13,11 +13,20 @@ model_config_dict = json.load(open(model_path + "/model_config.json", "r"))
 
 # import design parameter dict 
 design_parameters_dict = json.load(open(chosen_dir + "/design_parameters.json", "r"))
-input_variables = list(design_parameters_dict["Variables"].keys())
+design_input_variables = list(design_parameters_dict["Variables"].keys())
 
 # get the training data
 tidy_data = pd.read_csv(chosen_dir + "/Datasets/tidy_dataset.csv")
 tidy_data_training = tidy_data[tidy_data["DataPointType"] != "Validation"]
+
+
+
+# import model_params_dict
+model_params_dict = json.load(open(model_path + "model_params.json", "r"))
+model_terms = model_params_dict["model_terms"]
+
+# get trim the design input variables
+model_input_variables = [var for var in design_input_variables if var in model_terms]
 
 # initialise unique levels dict
 unique_levels_dict = {}
@@ -26,7 +35,7 @@ unique_levels_dict = {}
 data_slicing_values_for_plotting = {}
 
 # extract levels
-for variable in input_variables:
+for variable in model_input_variables:
     
     #get the unique levels
     unique_levels_dict[variable] = sorted(tidy_data_training[variable].unique().tolist())

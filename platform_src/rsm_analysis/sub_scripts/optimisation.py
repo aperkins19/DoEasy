@@ -385,4 +385,7 @@ def sim_anneal_matrix(
 
         history_x = np.concatenate((history_x, np.expand_dims(current_x.copy(), axis=0)), axis=0) # adds current x as another layer
 
-    return history_y, history_x
+    # recover temperature
+    SA_Hyper_Params["Temperature"] = Temperature
+
+    return history_y, history_x, SA_Hyper_Params

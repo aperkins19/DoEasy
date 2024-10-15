@@ -74,6 +74,10 @@ response_variables = list(design_parameters_dict["Response_Variables"].keys())
 # Merging coded_design with response variables from tidy_data via condition_id
 coded_design_with_response_values = coded_design.merge(tidy_data[["Condition_id"]+response_variables], on="Condition_id", how="right")
 
+
+print()
+print(coded_design_with_response_values)
+
 individual_effects_df = pd.DataFrame(columns=["Name", "Min", "Max", "Response_Variable"])
 
 # iterate over response and input variables
@@ -84,6 +88,7 @@ for response_variable in response_variables:
         input_series = coded_design_with_response_values[input_variable]
         response_series = coded_design_with_response_values[response_variables]
         individual = pd.concat([input_series, response_series], axis = 1)
+
 
         # calculate the max and min by averaging
         individual_effect_series = pd.Series([
@@ -99,13 +104,18 @@ for response_variable in response_variables:
 
 individual_effects_df.reset_index(drop=True, inplace=True)
 
+
+
+print()
+print(individual_effects_df)
+
+
 # melt to get tidy data
 individual_effects_df = individual_effects_df.melt(
     id_vars = ["Name", "Response_Variable"], #  col to keep the same
     var_name = "Range", # new col for the old column names
     value_name = "Value", # new col name for values
     )
-
 
 
 # # generate effects for each response variable
@@ -123,13 +133,21 @@ palette = sns.color_palette("colorblind", n_colors=len(individual_effects_df['Re
 
 # Number of plots
 num_subplots = len(input_variables)
+fontsize  = 20
 
 # Determine the layout of the subplots
-rows = int(np.ceil(num_subplots / 2))  # Adjust the number of rows as needed
-cols = 2
+cols = 3
+rows =  int(np.ceil(num_subplots / cols))
+#rows = int(np.ceil(num_subplots / 2))  # Adjust the number of rows as needed
+
+print()
+print("individual_effects_df")
+print(individual_effects_df["Value"].max())
+print(individual_effects_df["Value"].min())
+
 
 # Create the subplots
-fig, axes = plt.subplots(rows, cols, figsize=(10, rows * 4))
+fig, axes = plt.subplots(rows, cols, figsize=(15, rows * 4))
 
 # # Flatten the axes array for easy indexing
 axes = axes.flatten()
@@ -154,26 +172,32 @@ for ax, input_variable in zip(axes, input_variables):
         y = "Value",
         hue = "Response_Variable",
         palette=palette,
-        ax = ax
+        ax = ax,
+        legend=False  # Disable the legend for the lineplot
     )
 
-    ax.set_title(input_variable)
-    ax.set_xlabel("Range")
-    ax.set_ylabel("Value")
+    ax.set_ylim(individual_effects_df["Value"].min(), individual_effects_df["Value"].max())
+
+    ax.set_title(input_variable, fontsize = fontsize)
+    ax.set_xlabel("Range", fontsize = fontsize)
+    ax.set_ylabel("Effect", fontsize = fontsize)
+    # Set the y-tick label size
+    ax.tick_params(axis='y', labelsize=fontsize)
     ax.set_xticks([0,1])
-    ax.set_xticklabels(["Min","Max"])
+    ax.set_xticklabels(["Min","Max"], fontsize = fontsize)
     ax.legend().remove()  # Remove individual legends
 
 
 # Create a shared legend
 handles, labels = axes[0].get_legend_handles_labels()
-fig.legend(handles, labels, loc='lower center', ncol=len(input_variables))
+fig.legend(handles, labels, loc='lower center', ncol=len(input_variables), fontsize = fontsize)
 
 # Adjust layout to make room for the shared legend
-fig.suptitle("Individual Effects Plots", fontsize = 20)
-plt.tight_layout(rect=[0, 0.02, 1, 0.98])  # Adjust the rect to prevent overlap with the title and legend
+fig.suptitle("Main Effects of Input Variables on Response Variables", fontsize = fontsize +5)
+plt.tight_layout(rect=[0, 0.04, 1, 0.98])  # Adjust the rect to prevent overlap with the title and legend
 
-fig.savefig(project_path + "/Output/Individual_Effects_Plots.png")
+fig.savefig(project_path + "/Output/Main_Effects_Plots.png")
+fig.savefig(project_path + "/Output/Main_Effects_Plots.svg", format="svg")
 
 
 

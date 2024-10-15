@@ -117,6 +117,9 @@ def TrimRawTimecourseData(raw_timecourse_data, well_metadata):
             last_data_row_index = i
             break
 
+        else:
+            last_data_row_index = raw_timecourse_data.shape[0]
+
     # slice the raw_data
     trimmed_timecourse_data = raw_timecourse_data.iloc[:last_data_row_index,1:]
     
@@ -180,7 +183,8 @@ def WellSpecificMetadataAnnotation(melted_timecourse_data, well_metadata):
 
         # iterate over the metadata associated with that well and annotate accordingly
         for metadata_key, metadata_value in well_metadata[well].items():
-            well_specific_slice.loc[:,metadata_key] = metadata_value
+            well_specific_slice[metadata_key] = metadata_value
+            #well_specific_slice.loc[:,metadata_key] = metadata_value
 
 
         # add freshly annotated well_specific_slice to the new df

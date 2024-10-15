@@ -30,12 +30,27 @@ def preprocessing_tidy(raw_data, well_metadata, project_path, negative_control_d
     experiment_metadata_dict = ExtractExperimentMetadataFromRaw(raw_metadata)
 
 
+    if raw_data[raw_data.columns[1]].eq("12:00:03").any():
+        mask = raw_data[raw_data.columns[1]].eq("12:00:03")
+        first_zero_time_index = mask.idxmax()
 
+    else:
 
-    ### Time course data
+        # Step 1: Identify the first row where the second column has the value "00:00:00" starting from row 52
+        # Note: Adjust the column index if your 'time' is not the second column (python uses 0-based indexing)
+        first_zero_time_index = raw_data.iloc[51:][raw_data.columns[1]].eq("00:00:00").idxmax()
 
-    # get all rows below the metadata
-    raw_timecourse_data = raw_data.iloc[51:,0:].reset_index(drop=True)
+        # Step 2: Check if there actually is a "00:00:00" in the remaining rows; if not, use the entire DataFrame length
+        if raw_data.iloc[first_zero_time_index][raw_data.columns[1]] != "00:00:00":
+            first_zero_time_index = len(raw_data)
+
+    # Step 3: Slice the DataFrame from row 52 up to the first row with "00:00:00" in the second column
+    raw_timecourse_data = raw_data.iloc[51:first_zero_time_index, 0:].reset_index(drop=True)
+
+    print(raw_timecourse_data)
+
+    # # get all rows below the metadata
+    # raw_timecourse_data = raw_data.iloc[51:,0:].reset_index(drop=True)
 
     # trim
     trimmed_timecourse_data = TrimRawTimecourseData(raw_timecourse_data, well_metadata)

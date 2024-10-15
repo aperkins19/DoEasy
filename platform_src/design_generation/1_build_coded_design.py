@@ -19,6 +19,7 @@ design_parameters_path = project_path + "/design_parameters.json"
 design_parameters_dict = json.load(open(design_parameters_path, 'r'))
 variables_dict = design_parameters_dict["Variables"]
 
+print(variables_dict)
 
 variable_names = list(design_parameters_dict["Variables"].keys())
 num_replicates = design_parameters_dict["Technical_Replicates"]
@@ -27,13 +28,21 @@ num_replicates = design_parameters_dict["Technical_Replicates"]
 ## generate design
 if design_parameters_dict["Design_Type"] == "CCD":
 
+    if design_parameters_dict.get("Specified_Alpha") is not None:
+        alpha = design_parameters_dict["Specified_Alpha"]
+    else:
+        alpha = math.pow(math.pow(2,len(variables_dict)),0.25) # (2^k)**0.25
+
+
     design = CentralCompositeDesign(
         num_dimensions = len(variables_dict),
-        alpha = 1.25,
+        alpha = alpha,
         num_center_points = 2,
         variable_names = variable_names,
         num_replicates = num_replicates
         )
+    print()
+    print("Central Composite Design alpha: ", np.round(alpha, 3))
 
 elif design_parameters_dict["Design_Type"] == "Full_Factorial":
 
@@ -103,6 +112,7 @@ design.reset_index(inplace=True, drop=True)
 # Initialise empty Condition_id Column
 design["Condition_id"] = pd.Series(dtype="int64")
 
+print(design)
 # strip out the excess to create no replicates
 no_duplicates = design.drop_duplicates().reset_index(drop=True)
 

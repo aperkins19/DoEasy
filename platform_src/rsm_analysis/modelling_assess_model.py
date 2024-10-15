@@ -71,6 +71,14 @@ print()
 
 # build feature matrix containing both training and validation data if applicable
 
+# import design parameters
+design_parameters_dict = json.load(open(project_path + "design_parameters.json", 'r'))
+# import model_params_dict
+model_params_dict = json.load(open(model_path + "model_params.json", "r"))
+model_terms = model_params_dict["model_terms"]
+
+
+
 input_variables = list(design_parameters_dict["Variables"].keys())
 model_terms = model_params_dict["model_terms"]
 
@@ -85,6 +93,78 @@ feature_matrix["DataPointType"] = tidy_data["DataPointType"]
 
 # generate obs vs preds plot
 model.observations_vs_predictions(feature_matrix, project_path, model_path)
+
+# save coefficient csv and latex
+# Define the model terms and coefficients
+model_terms = [term.replace("_", "$\_$") for term in model_terms]
+model_terms = [
+    term.replace('**', r'\textsuperscript{') + '}' if '**' in term else term
+    for term in model_terms
+]
+
+
+model_df = pd.DataFrame(
+        {
+        "Model Term Symbol": ["$x_" + str(i)+"$" for i, coeff in enumerate(model_terms)],
+        "Model Terms": model_terms,
+        "Coefficient Symbol": ["$\\beta_" + str(i)+"$" for i, coeff in enumerate(model.model_coefficients)],
+        "Coefficients": [round(coeff, 2) for i, coeff in enumerate(model.model_coefficients)]
+        }
+    )
+
+
+#11model_df.index = model_df["Symbol"]; model_df.drop("Symbol", axis=1, inplace=True)
+model_df.to_csv(model_path + "/" + model.Y_name +"_model_coefficients.csv")
+
+# Convert DataFrame to LaTeX format
+latex_code = model_df.style.to_latex()
+
+# Split LaTeX code into lines
+latex_lines = latex_code.splitlines()
+
+# Iterate through lines and replace coefficients with rounded values
+# Rounded coefficients
+rounded_coefficients = [round(coeff, 2) for i, coeff in enumerate(model.model_coefficients)]
+
+
+updated_latex_code = []
+for i, line in enumerate(latex_lines):
+    if i > 1:  # Skip header lines
+        # Split the line by '&' and check if it has enough elements
+        updated_line = line.split('&')
+        if len(updated_line) >= 4:
+            # Replace the coefficient part with the rounded value
+            updated_line[-1] = f" {rounded_coefficients[i-2]:.2f} \\\\"
+            updated_latex_code.append(" & ".join(updated_line))
+        else:
+            updated_latex_code.append(line)  # Leave the line unchanged
+    else:
+        updated_latex_code.append(line)  # Keep header lines unchanged
+
+# Join the lines back into a LaTeX string
+updated_latex_string = "\n".join(updated_latex_code)
+
+# Split LaTeX code into lines
+latex_lines = updated_latex_string.splitlines()
+
+# Process each line to remove the first column
+updated_latex_code = []
+for line in latex_lines:
+    if "&" in line:  # Check if it's a data line
+        updated_line = line.split("&")[1:]  # Remove the first column (index)
+        updated_latex_code.append(" &".join(updated_line))  # Join the remaining columns
+    else:
+        updated_latex_code.append(line)  # Keep non-data lines unchanged
+
+# Join the lines back into a LaTeX string
+updated_latex_string = "\n".join(updated_latex_code)
+
+
+
+# Save LaTeX code to a text file
+with open(model_path + "/" + model.Y_name +"_model_coefficients.txt", 'w') as f:
+    f.write(updated_latex_string)
+
 
 
 # save model to persist model stats

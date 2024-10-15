@@ -2,7 +2,7 @@
 
 ## import
 source /app/platform_src/select_project.sh
-source /app/platform_src/initialisation/initialise_new_project_menu.sh
+source /app/platform_src/initialisation/initialise_new_project.sh
 source /app/platform_src/initialisation/copy_example_project.sh
 
 
@@ -19,7 +19,7 @@ while true; do
 
     case $choice in
         1) select_project;;
-        2) initialise_new_project_menu;;
+        2) initialise_new_project;;
         3) copy_example_project;;
         4) echo "Exiting script."; exit 0;;
 

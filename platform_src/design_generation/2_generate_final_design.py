@@ -98,7 +98,7 @@ def round_discrete_columns(df, discrete_variables):
 
             print(column_name)
             print(df[column_name].apply(round))
-            df[column_name] = df[column_name].apply(round)
+            #df[column_name] = df[column_name].apply(round)
             # Rounding using Python's built-in round function
     return df
 

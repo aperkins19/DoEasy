@@ -21,7 +21,7 @@ variables_dict = design_parameters_dict["Variables"]
 variables_list = list(variables_dict.keys())
 
 
-model_name = "Output/mCherry/models/final_model/"
+model_name = "Output/max_yield/models/quad/"
 
 model_path = project_path + model_name
 
@@ -52,11 +52,11 @@ if not os.path.exists(dir_path):
 #     }
 
 data_slice_dict = {
-    "Phosphate": 27.5,
-    "Mg2+": 12.5
+    "MG_Glut": 8.0,
+    "K_Glut": 105.0
     }
 
-experiment_description = "varying_pyruvate"
+experiment_description = "varying_dtt"
 
 model.get_specific_slice_plots(
     data_slice_dict = data_slice_dict,
@@ -67,10 +67,10 @@ model.get_specific_slice_plots(
 )
 
 data_slice_dict = {
-    "Pyruvate": 27.5,
-    "Mg2+": 12.5
+    "MG_Glut": 8.0,
+    "DTT": 1.0
     }
-experiment_description = "varying_phosphate"
+experiment_description = "varying_k_glut"
 
 model.get_specific_slice_plots(
     data_slice_dict = data_slice_dict,
@@ -81,8 +81,8 @@ model.get_specific_slice_plots(
 )
 
 data_slice_dict = {
-    "Phosphate": 27.5,
-    "Pyruvate": 27.5
+    "K_Glut": 105.0,
+    "DTT": 1.0
     }
 experiment_description = "varying_mg"
 

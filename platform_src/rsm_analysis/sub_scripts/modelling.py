@@ -8,6 +8,8 @@ import os
 import shutil
 from tqdm import tqdm
 import math
+from matplotlib.ticker import FuncFormatter
+
 
 def generate_formula(model_terms, response_variable, design_parameters_dict):
     
@@ -76,8 +78,10 @@ def generate_formula(model_terms, response_variable, design_parameters_dict):
 
     return formula
 
-def generate_feature_matrix(input_matrix, model_features):
 
+
+
+def generate_feature_matrix(input_matrix, model_features):
 
     feature_matrix = input_matrix.copy()
 
@@ -238,20 +242,78 @@ class LinearRegressionModel:
         performance_df["Residuals"] = performance_df["Observations"] - performance_df["Predictions"]
         performance_df["Zeros"] = 0
 
+
+
+
+
         # plotting
 
         fig, ax = plt.subplots(nrows=1, ncols=2)
         fig.set_figheight(5)
         fig.set_figwidth(10)
+        fontsize = 15
 
         # set datapoint colours
         IsValidationColours = {"Validation": "red", "Training": "blue"}
 
 
-        fig.suptitle("Model Performance", fontsize=18)
+        fig.suptitle(f"Model Performance: {self.Y_name}", fontsize=fontsize)
 
         # observations vs predictions
-        ax[0].set_title("Observed vs Predicted")
+        ax[0].set_title("Observed vs Predicted", fontsize=fontsize)
+
+        # Function to format the ticks to three significant figures
+        def tick_formatter_3sf(x, pos):
+            return f"{x:.3g}"
+
+        # Function to format the ticks to  two decimal places
+        def tick_formatter_2dp(x, pos):
+            return f"{x:.2f}"
+
+
+        # Create a FuncFormatter object using the function defined
+        formatter_3sf = FuncFormatter(tick_formatter_3sf)
+
+        # Create a FuncFormatter object using the function defined
+        formatter_2dp = FuncFormatter(tick_formatter_2dp)
+
+        # Set tick positions and labels for the first plot
+        x_ticks = np.linspace(start=min(performance_df["Predictions"]), stop=max(performance_df["Predictions"]), num=3)
+        y_ticks = np.linspace(start=min(performance_df["Observations"]), stop=max(performance_df["Observations"]), num=3)
+
+        ax[0].set_xticks(x_ticks)
+        ax[0].set_yticks(y_ticks)
+
+        # Apply the formatter to the axes
+        ax[0].xaxis.set_major_formatter(formatter_3sf)
+        ax[0].yaxis.set_major_formatter(formatter_3sf)
+        # Set tick label font size using tick_params
+        ax[0].tick_params(axis='x', labelsize=fontsize)  # Set font size for x-axis tick labels
+        ax[0].tick_params(axis='y', labelsize=fontsize)  # Set font size for y-axis tick labels
+
+        ax[0].set_xlabel("Predicted Values", fontsize=fontsize)
+        ax[0].set_ylabel("Observed Values", fontsize=fontsize)
+
+
+        # Set tick positions and labels for the first plot
+        x_ticks = np.linspace(start=min(performance_df["Observations"]), stop=max(performance_df["Observations"]), num=3)
+        y_ticks = np.linspace(start=min(performance_df["Residuals"]), stop=max(performance_df["Residuals"]), num=3)
+
+        ax[1].set_xticks(x_ticks)
+        ax[1].set_yticks(y_ticks)
+
+        # Apply the formatter to the axes
+        ax[1].xaxis.set_major_formatter(formatter_2dp)
+        ax[1].yaxis.set_major_formatter(formatter_2dp)
+        # Set tick label font size using tick_params
+        ax[1].tick_params(axis='x', labelsize=fontsize)  # Set font size for x-axis tick labels
+        ax[1].tick_params(axis='y', labelsize=fontsize)  # Set font size for y-axis tick labels
+
+        ax[1].set_xlabel("Observations", fontsize=fontsize)
+        ax[1].set_ylabel("Predictions", fontsize=fontsize)
+
+        # residuals plot
+        ax[1].set_title("Residuals", fontsize = fontsize)
 
         # begin plot
         sns.scatterplot(
@@ -271,10 +333,9 @@ class LinearRegressionModel:
             linestyle="--",
             color = "red",
             ax = ax[0]
-        )
+            )
 
-        # residuals plot
-        ax[1].set_title("Residuals")
+
 
         sns.scatterplot(
             data = performance_df,
@@ -292,7 +353,10 @@ class LinearRegressionModel:
             color = "red",
             linestyle="--",
             ax = ax[1]
-        )
+            )
+
+        ax[0].text(0.95, 0.05, f'R²: {round(self.r2,2)}', color='red', fontsize=fontsize, ha='right', va='bottom', transform=ax[0].transAxes)
+
 
         fig.tight_layout()            
 
@@ -322,14 +386,16 @@ class LinearRegressionModel:
         print(model.summary())
 
 
-
-    def model_term_significance_analysis(self, model_path, dont_plot_intercept=False, for_figure=False, tstat_absolute=False):
+    def model_term_significance_analysis(self, model_path, dont_plot_intercept=False, for_figure=False):
 
         import scipy.stats as stats
 
         # Example coefficients and standard errors
         model_terms = self.model_terms
         coefficients = self.model_coefficients  # Example coefficients
+
+        # response_variable
+        response_variable = self.Y_name
 
 
         n = self.X_true.shape[0]  # Number of observations
@@ -340,13 +406,21 @@ class LinearRegressionModel:
 
         estimated_variance_of_error_term = rss / dof
 
+        print()
+        print("Useful Stats for interpreting the results:")
+        print(f"Estimated Variance of Error Term for {response_variable}: {estimated_variance_of_error_term}")
+        print(f"RSS: {rss}")
+        print(f"Number of Observations, n: {n}")
+        print(f"Number of parameters (including intercept if applicable), p: {p}")
+        print(f"DoF = n - p: {dof}")
+        print()
         # this is the matrix of the feature matrix in np form.
         feature_matrix_matrix = self.X_true_feature_matrix.values
         # Calculate (XtX)^(-1)
         # first the matrix is transposed
         # the matrix multipled by feature matrix this produces the square matrix (cross-products of independent variables)
         # the square matrix is used to generate the inverse square matrix
-        # the inverse square matrix 
+        # the inverse square matrix
         XX_inv = np.linalg.inv(feature_matrix_matrix.T @ feature_matrix_matrix)
         # Multiply by estimated variance of the error term
         var_covar_matrix = estimated_variance_of_error_term * XX_inv
@@ -365,64 +439,62 @@ class LinearRegressionModel:
         significance_results["Model Terms"] = self.model_terms
         significance_results["Coefficient"] = coefficients
         significance_results["Standard Errors"] = standard_errors
-
-        if tstat_absolute:
-            significance_results["T-Statistic"] = np.abs(t_statistics)
-        else:
-            significance_results["T-Statistic"] = t_statistics
-
+        significance_results["T-Statistic"] = t_statistics
         significance_results["p-Value"] = p_values
 
-        print(significance_results)
+
+        #print(significance_results)
+
 
         ##### plot
 
+        fontsize = 13
 
         # if don't plot intercept
         if dont_plot_intercept:
             significance_results = significance_results[significance_results["Model Terms"] != "Intercept"]
 
         if for_figure:
-
-            fontsize = 20
-
             # ONLY THREE PLOTS
-            fig, ax = plt.subplots(nrows=2, ncols=1, sharey=True)
-            fig.set_figheight(10)
-            fig.set_figwidth(7)
+            #fig, ax = plt.subplots(nrows=1, ncols=3, sharey=True)
+            fig, ax = plt.subplots(nrows=1, ncols=2, sharey=True)
+            fig.set_figheight(5)
+            #fig.set_figwidth(15)
+            fig.set_figwidth(10)
 
-            # Tstat
-            #ax[0].set_title("T-Statistic", fontsize = fontsize)
-            ax[0].grid(axis='x', color='gray', linestyle='--', linewidth=2)
-            ax[0].set_xlim([0, 0.1])
-            ax[0].set_xticks(np.linspace(0,12, 4))
-            ax[0].tick_params(axis='x', labelsize=fontsize)
-            ax[0].tick_params(axis='y', labelsize=fontsize)
+            # ax[0].set_title("Coefficient")
+            # ax[0].grid(axis='x', color='gray', linestyle='--', linewidth=0.5)
+            # #ax[0, 0].set_xlim([0, 0.15])
+            #
+            # # begin plot
+            # sns.barplot(
+            #     data = significance_results,
+            #     x = "Coefficient",
+            #     y = "Model Terms",
+            #     color="black",
+            #     ax = ax[0]
+            #     )
 
-            ax[0].set_xlabel("T-Statistic", fontsize=fontsize)
-            ax[0].set_ylabel("Model Terms", fontsize=fontsize)
 
             # begin plot
             sns.barplot(
                 data = significance_results,
                 x = "T-Statistic",
                 y = "Model Terms",
-                color="grey",
+                color="black",
                 ax = ax[0]
                 )
 
-            # residuals plot
-            #ax[1].set_title("p-Value", fontsize = fontsize)
-            ax[1].grid(axis='x', color='gray', linestyle='--', linewidth=2)
-            ax[1].set_xlim([0, 0.1])
-            # Add a vertical line at p=0.05
-            ax[1].axvline(x=0.05, color='red', linestyle='--', linewidth=2)
-            ax[1].set_xticks(np.linspace(0,0.1, 3))
-            ax[1].tick_params(axis='x', labelsize=fontsize)
-            ax[1].tick_params(axis='y', labelsize=fontsize)
 
-            ax[1].set_xlabel("p-Value", fontsize=fontsize)
-            ax[1].set_ylabel("Model Terms", fontsize=fontsize)
+            # Tstat
+            ax[0].set_title("T-Statistic", fontsize = fontsize)
+            ax[0].grid(axis='x', color='gray', linestyle='--', linewidth=0.5)
+            ax[0].tick_params(axis='x', labelsize=fontsize)
+            ax[0].tick_params(axis='y', labelsize=fontsize)
+            ax[0].set_ylabel("Model Terms", fontsize=fontsize)
+            ax[0].set_xlabel("T-Statistic", fontsize=fontsize)
+
+
 
             from matplotlib.ticker import FuncFormatter
             # Function to format ticks to two decimal places
@@ -437,10 +509,25 @@ class LinearRegressionModel:
                 data = significance_results,
                 x = "p-Value",
                 y = "Model Terms",
-                color="grey",
+                color="black",
                 ax = ax[1]
                 )
-            
+
+
+            # residuals plot
+            ax[1].set_title("p-Value", fontsize = fontsize)
+            ax[1].grid(axis='x', color='gray', linestyle='--', linewidth=0.5)
+            ax[1].set_xlim([0, 0.1])
+            # Add a vertical line at x=3 to the first subplot
+            ax[1].axvline(x=0.05, color='red', linestyle='--', linewidth=1)
+            ax[1].set_xticks(np.linspace(0,0.1, 5))
+            ax[1].tick_params(axis='x', labelsize=fontsize)
+            ax[1].tick_params(axis='y', labelsize=fontsize)
+            ax[1].set_ylabel(None)
+            ax[1].set_xlabel("p-Value", fontsize=fontsize)
+
+
+
 
         else:
             # Create a figure with subplots
@@ -461,7 +548,7 @@ class LinearRegressionModel:
                 ax = ax[0,0]
                 )
 
-    
+
             # Tstat
             ax[1,0].set_title("T-Statistic")
             ax[1,0].grid(axis='x', color='gray', linestyle='--', linewidth=0.5)
@@ -512,13 +599,17 @@ class LinearRegressionModel:
                 color="black",
                 ax = ax[1,1]
                 )
-                
 
-        fig.tight_layout()            
+        fig.suptitle(response_variable, fontsize= 15)
 
-        plt.savefig(model_path + "/model_terms_signficance.png")
-        plt.savefig(model_path + "/model_terms_signficance.svg", format="svg")
+        fig.tight_layout()
+
+        plt.savefig(model_path +response_variable+"_model_terms_signficance.png")
+        plt.savefig(model_path +response_variable+"_model_terms_signficance.svg", format="svg")
         plt.clf()
+
+        return significance_results
+
 
 
 
@@ -565,8 +656,11 @@ class LinearRegressionModel:
         particles,
         Deep_Search,
         replicates,
-        decimal_point_threshold
+        decimal_point_threshold,
+        produce_plots = True
         ):
+
+        External_Search_Scaler = 5
 
         # Simulated annealing
         from sub_scripts.optimisation import simulated_annealing_multivariate
@@ -575,9 +669,12 @@ class LinearRegressionModel:
         
         ## define search space
         ordered_data = self.X_true[self.X_names]
+
         # Finding min and max values for each column
-        min_values = ordered_data.min()
-        max_values = ordered_data.max()
+        # plus or minus the centerpoint values plus or minus the mid value multipled by an external search scaler
+        min_values = ordered_data.min() - ((ordered_data.max() - ordered_data.min()) * External_Search_Scaler)
+        max_values = ordered_data.max() + ((ordered_data.max() - ordered_data.min()) * External_Search_Scaler)
+
         # Creating a list of tuples (min, max) for each column
         min_max_pairs = [(min_values[var], max_values[var]) for var in ordered_data.columns]
 
@@ -588,23 +685,23 @@ class LinearRegressionModel:
         import xarray as xr 
         import arviz as az
 
-        SA_Hyper_Params = {
-            "Temperature": 5,
-            "Cooling_Schedule": 0.95,
-            "N_Proposals": 1000,
-            "particles" : 10000,
-            "Deep_Search": 0,
-            "replicates" : 3,
-            "decimal_point_threshold" : 1
-        }
 
-        history_y, history_x = sim_anneal_matrix(
+
+        history_y, history_x, SA_Hyper_Params = sim_anneal_matrix(
             model = self,
             search_space_real = min_max_pairs,
             data_feature_generator = generate_feature_matrix,
             data_feature_generator_args = [self.X_names, self.model_terms, self.X_true_feature_matrix],
             show_progress_bar = True,
-            SA_Hyper_Params = SA_Hyper_Params
+            SA_Hyper_Params = {
+                        "Temperature": Temperature,
+                        "Cooling_Schedule": Cooling_Schedule,
+                        "N_Proposals": N_Proposals,
+                        "particles" : particles,
+                        "Deep_Search": Deep_Search,
+                        "replicates" : replicates,
+                        "decimal_point_threshold" : decimal_point_threshold
+                    }
             )
 
         
@@ -629,67 +726,71 @@ class LinearRegressionModel:
         ### plot all particle traces
         Data_Dimension_selected = self.Y_name
         Data_Dimension_sliced = history_DataArray.sel(Data_Dimension=Data_Dimension_selected).to_dataframe(name="values").reset_index()
-        
-        print("Creating all traces plot..")
 
-        plt.figure(figsize=(10, 6))
+        if produce_plots:
 
-        # Unique particles
-        unique_particles = Data_Dimension_sliced['Particles'].unique()
+            print("Creating all traces plot..")
 
-        # Plot each particle's line individually
-        for particle in unique_particles:
-            # Select the data for the current particle
-            particle_data = Data_Dimension_sliced[Data_Dimension_sliced['Particles'] == particle]
-            plt.plot(particle_data['Proposal'], particle_data['values'], color='blue', linewidth=0.1, alpha = 0.05)
+            plt.figure(figsize=(10, 6))
 
-        plt.xlabel('Proposal')
-        plt.ylabel(self.Y_name)
-        plt.title(f'{self.Y_name} across Proposals for all Particles')
-        plt.savefig(model_path + "/prediction/all_trace.png")
-        plt.savefig(model_path + "/prediction/all_trace.svg", format="svg")
+            # Unique particles
+            unique_particles = Data_Dimension_sliced['Particles'].unique()
 
-        
-        plt.close()
+            # Plot each particle's line individually
+            for particle in unique_particles:
+                # Select the data for the current particle
+                particle_data = Data_Dimension_sliced[Data_Dimension_sliced['Particles'] == particle]
+                plt.plot(particle_data['Proposal'], particle_data['values'], color='blue', linewidth=0.1, alpha = 0.05)
 
-        ### plot hdis of each diamension
+            plt.xlabel('Proposal')
+            plt.ylabel(self.Y_name)
+            plt.title(f'{self.Y_name} across Proposals for all Particles')
+            plt.savefig(model_path + "/prediction/all_trace.png")
+            plt.savefig(model_path + "/prediction/all_trace.svg", format="svg")
 
-        print("Plotting distibution of top performing solutions..")
 
-        # Select the data for self.Y_name
-        y_name_data = history_DataArray.sel(Data_Dimension=self.Y_name)
+            plt.close()
 
-        # Flatten the data and keep track of the original indices
-        flat_data = y_name_data.values.flatten()
-        original_indices = np.unravel_index(np.argsort(flat_data, axis=None)[-100:], y_name_data.shape)
+        if produce_plots:
 
-        # Extract top 100 indices
-        top_100_indices = {
-            'Proposal': original_indices[0],
-            'Particles': original_indices[1]
-        }
-        ## Retrieve the full rows for the top 100 values
-        # This will get the top 100 values across all Proposals and Particles
-        first_top_value_full_row = history_DataArray.isel(Proposal=top_100_indices['Proposal'], Particles=top_100_indices['Particles'])
-        
-        #print("")
-        #print("top")
-        #print(first_top_value_full_row.sel(Data_Dimension="Protein_Yield"))
+            ### plot hdis of each diamension
 
-        # plot the distribution for each variable
-        num_vars = len(first_top_value_full_row.coords['Data_Dimension'])
+            print("Plotting distibution of top performing solutions..")
 
-        fig, axes = plt.subplots(1, num_vars, figsize=(15, 4), sharey=True)  # Adjust the figsize as needed
+            # Select the data for self.Y_name
+            y_name_data = history_DataArray.sel(Data_Dimension=self.Y_name)
 
-        for i, var_name in enumerate(first_top_value_full_row.coords['Data_Dimension'].values):
-            
-            var_data = first_top_value_full_row.sel(Data_Dimension=var_name).values.flatten()
-            az.plot_posterior(var_data, ax=axes[i], hdi_prob=0.95)
-            axes[i].set_title(var_name)
+            # Flatten the data and keep track of the original indices
+            flat_data = y_name_data.values.flatten()
+            original_indices = np.unravel_index(np.argsort(flat_data, axis=None)[-100:], y_name_data.shape)
 
-        plt.tight_layout()
-        plt.savefig(model_path + "/prediction/kde_hdi.png")
-        plt.savefig(model_path + "/prediction/kde_hdi.svg", format="svg")
+            # Extract top 100 indices
+            top_100_indices = {
+                'Proposal': original_indices[0],
+                'Particles': original_indices[1]
+            }
+            ## Retrieve the full rows for the top 100 values
+            # This will get the top 100 values across all Proposals and Particles
+            first_top_value_full_row = history_DataArray.isel(Proposal=top_100_indices['Proposal'], Particles=top_100_indices['Particles'])
+
+            print("")
+            print("top")
+            print(first_top_value_full_row.sel(Data_Dimension=self.Y_name))
+
+            # plot the distribution for each variable
+            num_vars = len(first_top_value_full_row.coords['Data_Dimension'])
+
+            fig, axes = plt.subplots(1, num_vars, figsize=(15, 4), sharey=True)  # Adjust the figsize as needed
+
+            for i, var_name in enumerate(first_top_value_full_row.coords['Data_Dimension'].values):
+
+                var_data = first_top_value_full_row.sel(Data_Dimension=var_name).values.flatten()
+                az.plot_posterior(var_data, ax=axes[i], hdi_prob=0.95)
+                axes[i].set_title(var_name)
+
+            plt.tight_layout()
+            plt.savefig(model_path + "/prediction/kde_hdi.png")
+            plt.savefig(model_path + "/prediction/kde_hdi.svg", format="svg")
         
 
 
@@ -831,37 +932,49 @@ class LinearRegressionModel:
         # save
         max_y_samples.to_csv(model_path +"/predicted_optimum.csv")
 
-        return max_y_samples
+        return max_y_samples, max_x_list, max_y_list
 
 
 
     def generate_x_y_z_prediction_meshes(
         self,
-        fixed_level,
-        fixed_variable_name,
-        fixed_variables_dict,
+        current_fixed_variables_level,
         variables_compared_names,
         variables_compared_dict
         ):
 
-
-        # build the mesh
-        fixed_mesh = np.full_like(
-                variables_compared_dict[variables_compared_names[0]]["mesh"],
-                fill_value = fixed_level
-                )
+        fixed_variables_dict = {}
 
         # assign an array of min and max from variable data
-        fixed_variables_dict[fixed_variable_name] = {
-            "mesh" : fixed_mesh,
-            "mesh_flat" : fixed_mesh.flatten()
-        }      
+        for fixed_variable in current_fixed_variables_level:
+
+            # build the mesh
+            fixed_mesh = np.full_like(
+                variables_compared_dict[variables_compared_names[0]]["mesh"], # choose this one to copy the shape of
+                fill_value = current_fixed_variables_level[fixed_variable] # get the fill variable
+                )
+
+            fixed_variables_dict[fixed_variable] = {
+                "mesh" : fixed_mesh,
+                "mesh_flat" : fixed_mesh.flatten()
+            }
+
 
         # Create input data
         # combine both dictionaries
         all_variables_dict = {**variables_compared_dict, **fixed_variables_dict}
         # sort to match the order of the variables in the model.
         all_variables_dict = {key: all_variables_dict[key] for key in self.X_names}
+
+
+        #
+        # print()
+        # print(np.unique(variables_compared_dict[variables_compared_names[0]]["mesh"]))
+        # print(all_variables_dict.items())
+        # print()
+
+
+
         # unpack the flattened arrays and build a tuple
         flattened_grids = tuple([variable_dict["mesh_flat"] for variable_name, variable_dict in all_variables_dict.items()])
         # stack the flattened arrays columnwise
@@ -958,8 +1071,11 @@ class LinearRegressionModel:
         
         ## first create the directories for the individual surface plots
         # Extract the array and iterate through it to create dir
-        for input_var in self.X_names:
-            dir_path = os.path.join(model_path, "surface_plots", input_var)
+        combos = list(itertools.combinations(self.X_names, r=2))
+        for combo in combos:
+
+            dir_path = os.path.join(model_path, "surface_plots", combo[0]+"-"+combo[1])
+            print(dir_path)
             # Check if the directory exists
             if os.path.exists(dir_path):
                 # If it does, delete it recursively
@@ -992,10 +1108,13 @@ class LinearRegressionModel:
             variables = list(itertools.combinations(self.X_names, r=2))
             
             # set the z axis limit
-            df_combinations = self.get_predicted_Y_for_all_level_combinations(model_path)
+            #df_combinations = self.get_predicted_Y_for_all_level_combinations(model_path)
+            #z_axis_max = df_combinations[self.Y_name].max() * 1.2
+            #z_axis_min = df_combinations[self.Y_name].min() * 0.8
 
-            z_axis_max = df_combinations[self.Y_name].max() * 1.2
-            z_axis_min = df_combinations[self.Y_name].min() * 0.8
+            # quick fix
+            z_axis_max = self.Y_true.max()
+            z_axis_min = self.Y_true.min()
 
             ### mesh generation for each subplot.
             for combination in tqdm(variables, desc="Generating Plots"):
@@ -1009,7 +1128,7 @@ class LinearRegressionModel:
                 # Filter unique_levels_dict to include only keys that are in variables_fixed
                 variables_fixed_unique_levels_dict = {key: unique_levels_dict[key] for key in variables_fixed if key in unique_levels_dict}
 
-                
+
                 # convert to dicts for population
                 variables_compared = {element: None for element in variables_compared}
                 variables_fixed = {element: None for element in variables_fixed}
@@ -1023,10 +1142,11 @@ class LinearRegressionModel:
                         }
                     variables_compared[variable] = dict_for_assignment
 
-                
+
                 # get variable_meshes
                 variable_arrays = [variable_dict["initial_array"] for variable_name, variable_dict in variables_compared.items()]
                 variable_meshes = np.meshgrid(variable_arrays[0], variable_arrays[1])
+
 
                 # assign the mesh to the appropriate variable
                 for variable, mesh in zip(variables_compared, variable_meshes):
@@ -1034,7 +1154,7 @@ class LinearRegressionModel:
                     variables_compared[variable] = {
                         "mesh" : mesh,
                         "mesh_flat" : mesh.flatten()
-                    }
+                        }
 
                 # get the variable component names
                 variables_compared_names = list(combination)
@@ -1044,233 +1164,249 @@ class LinearRegressionModel:
                 # this one fixes the root variable
 
 
-                for variable in variables_fixed:
-                    # we then iterate again to get the "working var"
-                    for working_var in variables_fixed:
-                        # if they match, skip
-                        if (variable == working_var) and (len(variables_fixed) != 1):
-                            pass 
-                        else:
-                            
-                            #iterate over the unique levels of the working var
-                            for i, level in enumerate(variables_fixed_unique_levels_dict[working_var]):
+                ## initialise variables fixed to index 0
+                current_fixed_variables_level = variables_fixed.copy()
+                current_fixed_variables_level = {key: variables_fixed_unique_levels_dict[key][0] for key in current_fixed_variables_level}
+
+
+                # Get the keys and corresponding lists
+                keys = variables_fixed_unique_levels_dict.keys()
+                values = variables_fixed_unique_levels_dict.values()
+
+                # Get the Cartesian product of all values
+                combinations = itertools.product(*values)
+
+                # Iterate over each combination and create the dictionary
+                for combination in combinations:
+                    current_fixed_variables_level = dict(zip(keys, combination))
+
+                    print(current_fixed_variables_level)
                                 
-                                # generate the prediction meshes
-                                predicted_output, all_variables_dict = self.generate_x_y_z_prediction_meshes(
-                                        fixed_level = level,
-                                        fixed_variable_name = variable,
-                                        fixed_variables_dict = variables_fixed,
-                                        variables_compared_names = variables_compared_names,
-                                        variables_compared_dict = variables_compared                                        )
+                    # generate the prediction meshes
+                    predicted_output, all_variables_dict = self.generate_x_y_z_prediction_meshes(
+                            current_fixed_variables_level = current_fixed_variables_level,
+                            variables_compared_names = variables_compared_names,
+                            variables_compared_dict = variables_compared
+                            )
 
 
 
-                                # Create the surface plot
+                    # Create the surface plot
 
-                                # Create a figure with subplots
-                                fig = plt.figure(figsize=(
-                                    plot_args["Surface"]["Fig_Size_x"],
-                                    plot_args["Surface"]["Fig_Size_y"]
-                                    )
-                                    )
+                    # Create a figure with subplots
+                    fig = plt.figure(figsize=(
+                        plot_args["Surface"]["Fig_Size_x"],
+                        plot_args["Surface"]["Fig_Size_y"]
+                        )
+                        )
 
-                                # begin plot
-                                ax = fig.add_subplot(111, projection="3d")
+                    # begin plot
+                    ax = fig.add_subplot(111, projection="3d")
 
-                                # axis limits
-                                ax.set_xlim(
-                                    xmin = min(variables_compared[variables_compared_names[0]]["mesh_flat"]),
-                                    xmax = max(variables_compared[variables_compared_names[0]]["mesh_flat"]),
-                                    )
-                                ax.set_ylim(
-                                    ymin = min(variables_compared[variables_compared_names[1]]["mesh_flat"]),
-                                    ymax = max(variables_compared[variables_compared_names[1]]["mesh_flat"]),
-                                    )
-                                ax.set_zlim(
-                                    zmin = z_axis_min,
-                                    zmax = z_axis_max
-                                    )
-
-                                # axis labels
-                                ax.set_xlabel(variables_compared_names[0], fontsize = plot_args["Surface"]["Axis_label_font_size"])
-                                ax.set_ylabel(variables_compared_names[1], fontsize = plot_args["Surface"]["Axis_label_font_size"])
-                                ax.set_zlabel(self.Y_name, fontsize = plot_args["Surface"]["Axis_label_font_size"])
-
-                                # light source
-                                # Create a light source coming from the left top
-                                from matplotlib.colors import LightSource
-                                light = LightSource(45, 45)
-
-                                # Set the viewpoint
-                                if plot_args["Surface"]["plot_zero_surface"]:
-                                    elevation = plot_args["Surface"]["view_zero_surface_elevation"]  # Degrees from the x-y plane
-                                    azimuth = plot_args["Surface"]["view_zero_surface_azimuth"]    # Degrees around the z-axis
-                                else:
-                                    elevation = plot_args["Surface"]["view_normal_elevation"]  # Degrees from the x-y plane
-                                    azimuth = plot_args["Surface"]["view_normal_azimuth"]    # Degrees around the z-axis   
-
-                                ax.view_init(elev=elevation, azim=azimuth)
-
-                                if plot_args["Surface"]["plot_zero_surface"]:
-
-                                    ### segregate data sets 
-                                    ## upper
-                                    # Filter the meshes to keep only the values where predicted_output > 0
-                                    mask_upper = predicted_output > 0
-                                
-                                    # Copy the arrays to avoid changing the original data
-                                    x_upper = np.copy(all_variables_dict[variables_compared_names[0]]["mesh"])
-                                    y_upper = np.copy(all_variables_dict[variables_compared_names[1]]["mesh"])
-                                    z_upper = np.copy(predicted_output)
-
-                                    # Apply the mask, setting values where predicted_output is not greater than 0 to np.nan
-                                    x_upper[~mask_upper] = np.nan
-                                    y_upper[~mask_upper] = np.nan
-                                    z_upper[~mask_upper] = np.nan
-
-                                    ## lower
-                                    # Filter the meshes to keep only the values where predicted_output > 0
-                                    mask_lower = predicted_output < 0
-                                
-                                    # Copy the arrays to avoid changing the original data
-                                    x_lower = np.copy(all_variables_dict[variables_compared_names[0]]["mesh"])
-                                    y_lower = np.copy(all_variables_dict[variables_compared_names[1]]["mesh"])
-                                    z_lower = np.copy(predicted_output)
-
-                                    # Apply the mask, setting values where predicted_output is not greater than 0 to np.nan
-                                    x_lower[~mask_lower] = np.nan
-                                    y_lower[~mask_lower] = np.nan
-                                    z_lower[~mask_lower] = np.nan
-                                    
-                                    # Define kwargs for the model plots
-                                    lower_surface_kwargs = {
-                                        "rstride": 1,
-                                        "cstride": 1,
-                                        "cmap": 'plasma',
-                                        "linewidth": 0,
-                                        "antialiased": True,
-                                        "alpha": 0.5,  # Set transparency so we can see the overlap
-                                        "zorder": 0
-                                    }
-                                    # Plot the first surface
-                                    ax.plot_surface(
-                                        x_lower,
-                                        y_lower,
-                                        z_lower,
-                                            **lower_surface_kwargs
-                                            )
-
-                                    # Define kwargs for the plane method
-                                    plane_kwargs = {
-                                        "rstride": 1,
-                                        "cstride": 1,
-                                        "linewidth": 0,
-                                        "antialiased": True,
-                                        "alpha": 0.5,  # Set transparency so we can see the overlap
-                                        "zorder": 1,
-                                        "color": "grey"
-                                    }
-                                    # Plot the plane at z=0 with a higher zorder so it's drawn last
-                                    ax.plot_surface(
-                                        all_variables_dict[variables_compared_names[0]]["mesh"],
-                                        all_variables_dict[variables_compared_names[1]]["mesh"],
-                                        np.zeros_like(all_variables_dict[variables_compared_names[0]]["mesh"]),
-                                        **plane_kwargs
-                                        )
-
-                                    # Define kwargs for the model plots
-                                    upper_surface_kwargs = {
-                                        "rstride": 1,
-                                        "cstride": 1,
-                                        "cmap": 'plasma',
-                                        "linewidth": 0,
-                                        "antialiased": True,
-                                        "alpha": 1,  # Set transparency so we can see the overlap
-                                        "zorder": 2
-                                    }
-
-                                    # Plot the first surface
-                                    ax.plot_surface(
-                                        x_upper,
-                                        y_upper,
-                                        z_upper,
-                                            **upper_surface_kwargs
-                                            )
-
-                                # normal plotting without the plane
-                                else:
-                                    # # plot model
-                                    ax.plot_surface(
-                                        all_variables_dict[variables_compared_names[0]]["mesh"],
-                                        all_variables_dict[variables_compared_names[1]]["mesh"],
-                                        predicted_output,
-                                        cmap="plasma"
-                                        )
+                    # axis limits
+                    ax.set_xlim(
+                        xmin = min(variables_compared[variables_compared_names[0]]["mesh_flat"]),
+                        xmax = max(variables_compared[variables_compared_names[0]]["mesh_flat"]),
+                        )
+                    ax.set_ylim(
+                        ymin = min(variables_compared[variables_compared_names[1]]["mesh_flat"]),
+                        ymax = max(variables_compared[variables_compared_names[1]]["mesh_flat"]),
+                        )
 
 
-                                # plot ground truth
+                    ax.set_zlim(
+                        zmin = z_axis_min,
+                        zmax = z_axis_max
+                        )
 
-                                if plot_args["Surface"]["plot_ground_truth"]:
+                    # axis labels
+                    ax.set_xlabel(variables_compared_names[0], fontsize = plot_args["Surface"]["Axis_label_font_size"])
+                    ax.set_ylabel(variables_compared_names[1], fontsize = plot_args["Surface"]["Axis_label_font_size"])
+                    ax.set_zlabel(self.Y_name, fontsize = plot_args["Surface"]["Axis_label_font_size"])
 
-                                    # grab the values for slicing
-                                    # import model_config 
-                                    model_config_dict = json.load(open(model_path + "/model_config.json", "r"))
+                    # light source
+                    # Create a light source coming from the left top
+                    from matplotlib.colors import LightSource
+                    light = LightSource(45, 45)
 
-                                    # combine real x with real y
-                                    full_real_data = pd.concat([self.X_true, self.Y_true], axis=1)
+                    # Set the viewpoint
+                    if plot_args["Surface"]["plot_zero_surface"]:
+                        elevation = plot_args["Surface"]["view_zero_surface_elevation"]  # Degrees from the x-y plane
+                        azimuth = plot_args["Surface"]["view_zero_surface_azimuth"]    # Degrees around the z-axis
+                    else:
+                        elevation = plot_args["Surface"]["view_normal_elevation"]  # Degrees from the x-y plane
+                        azimuth = plot_args["Surface"]["view_normal_azimuth"]    # Degrees around the z-axis
 
-                                    # slice data to get the data points where the fixed variable is the same.                    
-                                    real_data_slice = full_real_data.copy()
-                                    # iterate over the fixed variables slicing the data to the mid points
-                                    for fixed_variable in variables_fixed.keys():
+                    ax.view_init(elev=elevation, azim=azimuth)
 
-                                        real_data_slice = real_data_slice[
-                                            real_data_slice[fixed_variable] == level
-                                        ]
+                    if plot_args["Surface"]["plot_zero_surface"]:
+
+                        ### segregate data sets
+                        ## upper
+                        # Filter the meshes to keep only the values where predicted_output > 0
+                        mask_upper = predicted_output > 0
+
+                        # Copy the arrays to avoid changing the original data
+                        x_upper = np.copy(all_variables_dict[variables_compared_names[0]]["mesh"])
+                        y_upper = np.copy(all_variables_dict[variables_compared_names[1]]["mesh"])
+                        z_upper = np.copy(predicted_output)
+
+                        # Apply the mask, setting values where predicted_output is not greater than 0 to np.nan
+                        x_upper[~mask_upper] = np.nan
+                        y_upper[~mask_upper] = np.nan
+                        z_upper[~mask_upper] = np.nan
+
+                        ## lower
+                        # Filter the meshes to keep only the values where predicted_output > 0
+                        mask_lower = predicted_output < 0
+
+                        # Copy the arrays to avoid changing the original data
+                        x_lower = np.copy(all_variables_dict[variables_compared_names[0]]["mesh"])
+                        y_lower = np.copy(all_variables_dict[variables_compared_names[1]]["mesh"])
+                        z_lower = np.copy(predicted_output)
+
+                        # Apply the mask, setting values where predicted_output is not greater than 0 to np.nan
+                        x_lower[~mask_lower] = np.nan
+                        y_lower[~mask_lower] = np.nan
+                        z_lower[~mask_lower] = np.nan
+
+                        # Define kwargs for the model plots
+                        lower_surface_kwargs = {
+                            "rstride": 1,
+                            "cstride": 1,
+                            "cmap": 'plasma',
+                            "linewidth": 0,
+                            "antialiased": True,
+                            "alpha": 0.5,  # Set transparency so we can see the overlap
+                            "zorder": 0
+                        }
+                        # Plot the first surface
+                        ax.plot_surface(
+                            x_lower,
+                            y_lower,
+                            z_lower,
+                                **lower_surface_kwargs
+                                )
+
+                        # Define kwargs for the plane method
+                        plane_kwargs = {
+                            "rstride": 1,
+                            "cstride": 1,
+                            "linewidth": 0,
+                            "antialiased": True,
+                            "alpha": 0.5,  # Set transparency so we can see the overlap
+                            "zorder": 1,
+                            "color": "grey"
+                        }
+                        # Plot the plane at z=0 with a higher zorder so it's drawn last
+                        ax.plot_surface(
+                            all_variables_dict[variables_compared_names[0]]["mesh"],
+                            all_variables_dict[variables_compared_names[1]]["mesh"],
+                            np.zeros_like(all_variables_dict[variables_compared_names[0]]["mesh"]),
+                            **plane_kwargs
+                            )
+
+                        # Define kwargs for the model plots
+                        upper_surface_kwargs = {
+                            "rstride": 1,
+                            "cstride": 1,
+                            "cmap": 'plasma',
+                            "linewidth": 0,
+                            "antialiased": True,
+                            "alpha": 1,  # Set transparency so we can see the overlap
+                            "zorder": 2
+                        }
+
+                        # Plot the first surface
+                        ax.plot_surface(
+                            x_upper,
+                            y_upper,
+                            z_upper,
+                                **upper_surface_kwargs
+                                )
+
+                    # normal plotting without the plane
+                    else:
+                        # # plot model
+                        ax.plot_surface(
+                            all_variables_dict[variables_compared_names[0]]["mesh"],
+                            all_variables_dict[variables_compared_names[1]]["mesh"],
+                            predicted_output,
+                            cmap="plasma"
+                            )
 
 
-                                    # make sure x and y are the same as the model grid
-                                    x_real_data = real_data_slice[variables_compared_names[0]]
-                                    y_real_data = real_data_slice[variables_compared_names[1]]
-                                    # extract the y data
-                                    z_real_data = real_data_slice[self.Y_name]
-                                    
-                                    #plot
-                                    ax.scatter(x_real_data, y_real_data, z_real_data)
+                    # plot ground truth
+
+                    # if plot_args["Surface"]["plot_ground_truth"]:
+                    #
+                    #     # grab the values for slicing
+                    #     # import model_config
+                    #     model_config_dict = json.load(open(model_path + "/model_config.json", "r"))
+                    #
+                    #     # combine real x with real y
+                    #     full_real_data = pd.concat([self.X_true, self.Y_true], axis=1)
+                    #
+                    #     # slice data to get the data points where the fixed variable is the same.
+                    #     real_data_slice = full_real_data.copy()
+                    #     # iterate over the fixed variables slicing the data to the mid points
+                    #     for fixed_variable in variables_fixed.keys():
+                    #
+                    #         real_data_slice = real_data_slice[
+                    #             real_data_slice[fixed_variable] == level
+                    #         ]
+                    #
+                    #
+                    #     # make sure x and y are the same as the model grid
+                    #     x_real_data = real_data_slice[variables_compared_names[0]]
+                    #     y_real_data = real_data_slice[variables_compared_names[1]]
+                    #     # extract the y data
+                    #     z_real_data = real_data_slice[self.Y_name]
+                    #
+                    #     #plot
+                    #     ax.scatter(x_real_data, y_real_data, z_real_data)
 
 
-                                ax.set_title(
-                                    working_var+": "+str(level) + " " + design_parameters_dict["Variables"][working_var]["Units"],
-                                    loc="center", fontsize=plot_args["Surface"]["Plot_title_font_size"])
+                    unpacked_dict_str = ", ".join(f"{key}: {value}" for key, value in current_fixed_variables_level.items())
+                    # Using the unpacked string in your ax.set_title function
+                    ax.set_title(
+                        f"{unpacked_dict_str}",
+                        loc="center", fontsize=plot_args["Surface"]["Plot_title_font_size"])
 
 
-                                fig.suptitle(
-                                    "Surface Plot of Model Fit: "+ variables_compared_names[0]+" vs "+variables_compared_names[1], fontsize= plot_args["Surface"]["Suptitle_font_size"])
+                    fig.suptitle(
+                        "Surface Plot of Model Fit: "+ variables_compared_names[0]+" vs "+variables_compared_names[1], fontsize= plot_args["Surface"]["Suptitle_font_size"])
 
-                                plt.tight_layout(rect=[0, 0.02, 1, 0.98])  # Adjust the rect to prevent overlap with the title and legend
-                                plt.savefig(model_path + "surface_plots/"+working_var + "/surface_plot_"+experiment_description+"_"+working_var+"_"+str(i)+".png")
-                                plt.savefig(model_path + "surface_plots/"+working_var + "/surface_plot_"+experiment_description+"_"+working_var+"_"+str(i)+".svg", format="svg")
-                                plt.clf()
+                    plt.tight_layout(rect=[0, 0.02, 1, 0.98])  # Adjust the rect to prevent overlap with the title and legend
 
-                    ## now all plots have been made make gif
-                    if plot_args["Surface"]["GIF"]:
-                        import imageio
+                    #for save
+                    unpacked_dict_str = "_".join(f"{key}-{value}" for key, value in current_fixed_variables_level.items())
 
-                        # Directory containing .png files
-                        png_dir = model_path + "surface_plots/"+working_var
-                        # Output GIF file name
-                        gif_name = variables_compared_names[0]+"_vs_"+variables_compared_names[1]+".gif"
+                    plt.savefig(model_path + "surface_plots/"+variables_compared_names[0]+"-"+variables_compared_names[1] + "/surface_plot_"+unpacked_dict_str+".png")
+                    plt.savefig(model_path + "surface_plots/"+variables_compared_names[0]+"-"+variables_compared_names[1] + "/surface_plot_"+unpacked_dict_str+".svg", format="svg")
+                    plt.clf()
 
-                        images = []
-                        for file_name in sorted(os.listdir(png_dir)):
-                            if file_name.endswith('.png'):
-                                file_path = os.path.join(png_dir, file_name)
-                                images.append(imageio.imread(file_path))
+                    plt.close()
+
+        ## now all plots have been made make gif
+        if plot_args["Surface"]["GIF"]:
+            import imageio
+
+            # Directory containing .png files
+            png_dir = model_path + "surface_plots/"+variables_compared_names[0]+"-"+variables_compared_names[1]
+            # Output GIF file name
+            gif_name = variables_compared_names[0]+"_vs_"+variables_compared_names[1]+".gif"
+
+            images = []
+            for file_name in sorted(os.listdir(png_dir)):
+                if file_name.endswith('.png'):
+                    file_path = os.path.join(png_dir, file_name)
+                    images.append(imageio.imread(file_path))
 
 
-                        # Save the images as a GIF with the specified duration between frames
-                        imageio.mimsave(os.path.join(png_dir, gif_name), images, 'GIF', fps=plot_args["Surface"]["fps"])                          
-                                                                                    
+            # Save the images as a GIF with the specified duration between frames
+            imageio.mimsave(os.path.join(png_dir, gif_name), images, 'GIF', fps=plot_args["Surface"]["fps"])
+
         else:
             raise ValueError("Shape of X Data unknown.")
 
@@ -1284,10 +1420,12 @@ class LinearRegressionModel:
         ):
             
         
-        ## first create the directories for the individual contour plots
+        ## first create the directories for the individual surface plots
         # Extract the array and iterate through it to create dir
-        for input_var in self.X_names:
-            dir_path = os.path.join(model_path, "contour_plots", input_var)
+        combos = list(itertools.combinations(self.X_names, r=2))
+        for combo in combos:
+
+            dir_path = os.path.join(model_path, "contour_plots", combo[0]+"-"+combo[1])
             # Check if the directory exists
             if os.path.exists(dir_path):
                 # If it does, delete it recursively
@@ -1325,20 +1463,23 @@ class LinearRegressionModel:
             variables = list(itertools.combinations(self.X_names, r=2))
             
             # set the z axis limit
-            df_combinations = self.get_predicted_Y_for_all_level_combinations(model_path)
+            #df_combinations = self.get_predicted_Y_for_all_level_combinations(model_path)
+            #z_axis_max = df_combinations[self.Y_name].max() * 1.2
+            #z_axis_min = df_combinations[self.Y_name].min() * 0.8
 
-            z_axis_max = df_combinations[self.Y_name].max() * 1.2
-            z_axis_min = df_combinations[self.Y_name].min() * 0.8
+            # quick fix
+            z_axis_max = self.Y_true.max()
+            z_axis_min = self.Y_true.min()
 
             ### mesh generation for each subplot.
-            for combination in tqdm(variables, desc="Generating Plots"):
+            for var_combination in tqdm(variables, desc="Combination of Variables"):
 
                                     
                 # convert to sets to extract variable compared and fixed
-                variables_compared = set(combination)
+                variables_compared = set(var_combination)
                 variables_fixed = set(self.X_names) - variables_compared
 
-                # get unique levels of combination
+                # get unique levels of var_combination
                 # Filter unique_levels_dict to include only keys that are in variables_fixed
                 variables_fixed_unique_levels_dict = {key: unique_levels_dict[key] for key in variables_fixed if key in unique_levels_dict}
 
@@ -1370,364 +1511,358 @@ class LinearRegressionModel:
                     }
 
                 # get the variable component names
-                variables_compared_names = list(combination)
+                variables_compared_names = list(var_combination)
 
                 ##### this is where we iterate over the fixed variables levels to generate each subplot.
                 # in order to create every possible slice, we fix one variable whilst we iterate over the over.
                 # this one fixes the root variable
 
+                ## initialise variables fixed to index 0
+                current_fixed_variables_level = variables_fixed.copy()
+                current_fixed_variables_level = {key: variables_fixed_unique_levels_dict[key][0] for key in current_fixed_variables_level}
 
 
-                for variable in variables_fixed:
-                    # we then iterate again to get the "working var"
-                    for working_var in variables_fixed:
-                        # if they match, skip
-                        if (variable == working_var) and (len(variables_fixed) != 1):
-                            pass 
-                        else:
-                            
-                            #iterate over the unique levels of the working var
-                            for i, level in enumerate(variables_fixed_unique_levels_dict[working_var]):
+                # Get the keys and corresponding lists
+                keys = variables_fixed_unique_levels_dict.keys()
+                values = variables_fixed_unique_levels_dict.values()
 
+                # Get the Cartesian product of all values
+                fixed_combinations = itertools.product(*values)
 
-                                # generate the prediction meshes
-                                predicted_output, all_variables_dict = self.generate_x_y_z_prediction_meshes(
-                                        fixed_level = level,
-                                        fixed_variable_name = variable,
-                                        fixed_variables_dict = variables_fixed,
-                                        variables_compared_names = variables_compared_names,
-                                        variables_compared_dict = variables_compared                                        )
+                # Iterate over each combination and create the dictionary
+                for fixed_combination in tqdm(fixed_combinations, desc="Scanning Fixed Variables"):
+
+                    current_fixed_variables_level = dict(zip(keys, fixed_combination))
+
+                    unpacked_dict_str = ", ".join(f"{key}: {value}" for key, value in current_fixed_variables_level.items())
+
+                    print(f"  -- {unpacked_dict_str}")
 
 
 
-                                # Create the surface plot
-                                # Define your desired figsize (width, height in inches)
+                    # generate the prediction meshes
+                    predicted_output, all_variables_dict = self.generate_x_y_z_prediction_meshes(
+                            current_fixed_variables_level = current_fixed_variables_level,
+                            variables_compared_names = variables_compared_names,
+                            variables_compared_dict = variables_compared
+                            )
 
-                                # Create a figure with subplots
-                                fig = plt.figure(figsize=(
-                                    plot_args["Contour"]["Fig_Size_x"],
-                                    plot_args["Contour"]["Fig_Size_y"]
-                                    )
-                                    )
+                    # Create the surface plot
+                    # Define your desired figsize (width, height in inches)
+                    figsize = (10, 10)
 
-                                # begin plot
-                                ax = fig.add_subplot(111)
+                    # Create a figure with subplots
+                    fig = plt.figure(figsize=(
+                        plot_args["Contour"]["Fig_Size_x"],
+                        plot_args["Contour"]["Fig_Size_y"]
+                        )
+                        )
 
-                                # axis limits
-                                ax.set_xlim(
-                                    xmin = min(variables_compared[variables_compared_names[0]]["mesh_flat"]),
-                                    xmax = max(variables_compared[variables_compared_names[0]]["mesh_flat"]),
-                                    )
-                                ax.set_ylim(
-                                    ymin = min(variables_compared[variables_compared_names[1]]["mesh_flat"]),
-                                    ymax = max(variables_compared[variables_compared_names[1]]["mesh_flat"]),
-                                    )
+                    # begin plot
+                    ax = fig.add_subplot(111)
 
-
-                                # axis labels
-                                ax.set_xlabel(
-                                    variables_compared_names[0] + " ("+ design_parameters_dict["Variables"][variables_compared_names[0]]["Units"] + ")",
-                                    fontsize = plot_args["Contour"]["Axis_label_font_size"]
-                                    )
-                                ax.set_ylabel(
-                                    variables_compared_names[1] + " ("+ design_parameters_dict["Variables"][variables_compared_names[1]]["Units"] + ")",
-                                    fontsize = plot_args["Contour"]["Axis_label_font_size"]
-                                    )
-
-                                # set ticks
-                                if plot_args["Contour"]["Ticks_use_levels"]:
-                                    ax.set_xticks(unique_levels_dict[variables_compared_names[0]])
-                                    ax.tick_params(
-                                        axis='x',
-                                        labelsize=plot_args["Contour"]["Ticks_label_size"],
-                                        rotation = 55
-                                        )
-
-                                    ax.set_yticks(unique_levels_dict[variables_compared_names[1]])
-                                    ax.tick_params(axis='y', labelsize=plot_args["Contour"]["Ticks_label_size"])
+                    # axis limits
+                    ax.set_xlim(
+                        xmin = min(variables_compared[variables_compared_names[0]]["mesh_flat"]),
+                        xmax = max(variables_compared[variables_compared_names[0]]["mesh_flat"]),
+                        )
+                    ax.set_ylim(
+                        ymin = min(variables_compared[variables_compared_names[1]]["mesh_flat"]),
+                        ymax = max(variables_compared[variables_compared_names[1]]["mesh_flat"]),
+                        )
 
 
-                                # Create the contour plot
-                                ax.contourf(
-                                        all_variables_dict[variables_compared_names[0]]["mesh"],
-                                        all_variables_dict[variables_compared_names[1]]["mesh"],
-                                        predicted_output,
-                                        cmap="viridis",
-                                        levels=levels
-                                        )
+                    # axis labels
+                    ax.set_xlabel(variables_compared_names[0], fontsize = plot_args["Contour"]["Axis_label_font_size"])
+                    ax.set_ylabel(variables_compared_names[1], fontsize = plot_args["Contour"]["Axis_label_font_size"])
 
-                                ax.contour(
-                                    all_variables_dict[variables_compared_names[0]]["mesh"],
-                                    all_variables_dict[variables_compared_names[1]]["mesh"],
-                                    predicted_output,
-                                    levels=levels,
-                                    colors='black',
-                                    linewidths=0.5
-                                    )
+                    # set ticks
+                    if plot_args["Contour"]["Ticks_use_levels"]:
+                        ax.set_xticks(unique_levels_dict[variables_compared_names[0]])
+                        ax.tick_params(axis='x', labelsize=plot_args["Contour"]["Ticks_label_size"])
+                        for label in ax.get_xticklabels():
+                            label.set_rotation(45)
 
-                                #plt.colorbar()
-
-                                if plot_args["Contour"]["Grid"]:
-                                    plt.grid(
-                                        color=plot_args["Contour"]["Grid_colour"],
-                                        linestyle=plot_args["Contour"]["Grid_linestyle"],
-                                        linewidth=plot_args["Contour"]["Grid_linewidth"]
-                                        )  # Customize the grid as needed
+                        ax.set_yticks(unique_levels_dict[variables_compared_names[1]])
+                        ax.tick_params(axis='y', labelsize=plot_args["Contour"]["Ticks_label_size"])
 
 
-                                # plot ground truth
+                    # Create the contour plot
+                    ax.contourf(
+                            all_variables_dict[variables_compared_names[0]]["mesh"],
+                            all_variables_dict[variables_compared_names[1]]["mesh"],
+                            predicted_output,
+                            cmap="plasma",
+                            levels=levels
+                            )
 
-                                if plot_args["Contour"]["plot_ground_truth"]:
+                    #plt.colorbar()
 
-                                    # grab the values for slicing
-                                    # import model_config 
-                                    model_config_dict = json.load(open(model_path + "/model_config.json", "r"))
-
-                                    # combine real x with real y
-                                    full_real_data = pd.concat([self.X_true, self.Y_true], axis=1)
-
-                                    # slice data to get the data points where the fixed variable is the same.                    
-                                    real_data_slice = full_real_data.copy()
-                                    # iterate over the fixed variables slicing the data to the mid points
-                                    for fixed_variable in variables_fixed.keys():
-
-                                        real_data_slice = real_data_slice[
-                                            real_data_slice[fixed_variable] == level
-                                        ]
+                    if plot_args["Contour"]["Grid"]:
+                        plt.grid(
+                            color=plot_args["Contour"]["Grid_colour"],
+                            linestyle=plot_args["Contour"]["Grid_linestyle"],
+                            linewidth=plot_args["Contour"]["Grid_linewidth"]
+                            )  # Customize the grid as needed
 
 
-                                    # make sure x and y are the same as the model grid
-                                    x_real_data = real_data_slice[variables_compared_names[0]]
-                                    y_real_data = real_data_slice[variables_compared_names[1]]
-                                    # extract the y data
-                                    z_real_data = real_data_slice[self.Y_name]
-                                    
-                                    #plot
-                                    ax.scatter(
-                                        x_real_data,
-                                        y_real_data,
-                                        z_real_data,
-                                        marker="o",
-                                        color="red")
+                    # plot ground truth
+                    #
+                    # if plot_args["Contour"]["plot_ground_truth"]:
+                    #
+                    #     # grab the values for slicing
+                    #     # import model_config
+                    #     model_config_dict = json.load(open(model_path + "/model_config.json", "r"))
+                    #
+                    #     # combine real x with real y
+                    #     full_real_data = pd.concat([self.X_true, self.Y_true], axis=1)
+                    #
+                    #     # slice data to get the data points where the fixed variable is the same.
+                    #     real_data_slice = full_real_data.copy()
+                    #     # iterate over the fixed variables slicing the data to the mid points
+                    #     for fixed_variable in variables_fixed.keys():
+                    #
+                    #         real_data_slice = real_data_slice[
+                    #             real_data_slice[fixed_variable] == level
+                    #         ]
+                    #
+                    #
+                    #     # make sure x and y are the same as the model grid
+                    #     x_real_data = real_data_slice[variables_compared_names[0]]
+                    #     y_real_data = real_data_slice[variables_compared_names[1]]
+                    #     # extract the y data
+                    #     z_real_data = real_data_slice[self.Y_name]
+                    #
+                    #     #plot
+                    #     ax.scatter(x_real_data, y_real_data, z_real_data)
 
 
-                                ax.set_title(
-                                    working_var+": "+str(level) + " (" + design_parameters_dict["Variables"][working_var]["Units"] + ")",
-                                    loc="center", fontsize=plot_args["Contour"]["Plot_title_font_size"])
+                    unpacked_dict_str = ", ".join(f"{key}: {value}" for key, value in current_fixed_variables_level.items())
+                    # Using the unpacked string in your ax.set_title function
+                    ax.set_title(
+                        f"{unpacked_dict_str}",
+                        loc="center", fontsize=plot_args["Contour"]["Plot_title_font_size"] - 7, pad=25)
 
 
-                                #fig.suptitle(
-                                #    "Contour Plot of Model Fit: "+ variables_compared_names[0]+" vs "+variables_compared_names[1], fontsize= plot_args["Contour"]["Suptitle_font_size"])
+                    fig.suptitle(
+                        variables_compared_names[0]+" vs "+variables_compared_names[1], fontsize= plot_args["Contour"]["Suptitle_font_size"])
 
-                                plt.tight_layout(rect=[0, 0.02, 1, 0.98])  # Adjust the rect to prevent overlap with the title and legend
-                                plt.savefig(model_path + "contour_plots/"+working_var + "/contour_plot_"+experiment_description+"_"+working_var+"_"+str(i)+".png")
-                                plt.savefig(model_path + "contour_plots/"+working_var + "/contour_plot_"+experiment_description+"_"+working_var+"_"+str(i)+".svg", format="svg")
+                    plt.tight_layout(rect=[0, 0.02, 1, 0.98])  # Adjust the rect to prevent overlap with the title and legend
 
-                                plt.close()
+                    #for save
+                    unpacked_dict_str = "_".join(f"{key}-{value}" for key, value in current_fixed_variables_level.items())
 
-                    ## now all plots have been made make gif
-                    if plot_args["Surface"]["GIF"]:
-                        import imageio
+                    plt.savefig(model_path + "contour_plots/"+variables_compared_names[0]+"-"+variables_compared_names[1] + "/contour_plot_"+unpacked_dict_str+".png")
+                    plt.savefig(model_path + "contour_plots/"+variables_compared_names[0]+"-"+variables_compared_names[1] + "/contour_plot_"+unpacked_dict_str+".svg", format="svg")
+                    plt.clf()
 
-                        # Directory containing .png files
-                        png_dir = model_path + "contour_plots/"+working_var
-                        # Output GIF file name
-                        gif_name = variables_compared_names[0]+"_vs_"+variables_compared_names[1]+".gif"
+                    plt.close()
 
-                        images = []
-                        for file_name in sorted(os.listdir(png_dir)):
-                            if file_name.endswith('.png'):
-                                file_path = os.path.join(png_dir, file_name)
-                                images.append(imageio.imread(file_path))
+                ## now all plots have been made make gif
+                if plot_args["Contour"]["GIF"]:
+                    import imageio
+
+                    # Directory containing .png files
+                    png_dir = model_path + "contour_plots/"+variables_compared_names[0]+"-"+variables_compared_names[1]
+                    # Output GIF file name
+                    gif_name = variables_compared_names[0]+"_vs_"+variables_compared_names[1]+".gif"
+
+                    images = []
+                    for file_name in sorted(os.listdir(png_dir)):
+                        if file_name.endswith('.png'):
+                            file_path = os.path.join(png_dir, file_name)
+                            images.append(imageio.imread(file_path))
 
 
-                        # Save the images as a GIF with the specified duration between frames
-                        imageio.mimsave(os.path.join(png_dir, gif_name), images, 'GIF', fps=plot_args["Contour"]["fps"])                          
+                    # Save the images as a GIF with the specified duration between frames
+                    imageio.mimsave(os.path.join(png_dir, gif_name), images, 'GIF', fps=plot_args["Contour"]["fps"])
                                                                                     
         else:
             raise ValueError("Shape of X Data unknown.")
 
-    
 
     def get_specific_slice_plots(
-        self,
-        data_slice_dict,
-        experiment_description,
-        model_path,
-        project_path,
-        plot_args
-        ):
+            self,
+            data_slice_dict,
+            experiment_description,
+            model_path,
+            project_path,
+            plot_args
+            ):
 
 
-        # import design parameters
-        design_parameters_dict = json.load(open(project_path + "design_parameters.json", 'r'))
+            # import design parameters
+            design_parameters_dict = json.load(open(project_path + "design_parameters.json", 'r'))
 
 
-        # first check if model is fitted.
-        if self.r2 is None:
-            raise ValueError("Fit not performed yet. Call the 'fit' method first. ")
+            # first check if model is fitted.
+            if self.r2 is None:
+                raise ValueError("Fit not performed yet. Call the 'fit' method first. ")
 
-        # determine the amount of X variables
+            # determine the amount of X variables
 
-        # import model config to get unique levels
-        model_config_dict = json.load(open(model_path + "model_config.json", "r"))
-        unique_levels_dict = model_config_dict["Unique_Levels"]
+            # import model config to get unique levels
+            model_config_dict = json.load(open(model_path + "model_config.json", "r"))
+            unique_levels_dict = model_config_dict["Unique_Levels"]
 
-        variables = list(itertools.combinations(self.X_names, r=2))
-        
-        # set the z axis limit
-        df_combinations = self.get_predicted_Y_for_all_level_combinations(model_path)
-        y_axis_max = df_combinations[self.Y_name].max() * 1.2
-        y_axis_min = df_combinations[self.Y_name].min() * 0.8
-        
-           
-        # convert to sets to extract variable compared and fixed
-        variables_fixed_set = set(data_slice_dict.keys())
-        variable_explored_set = set(self.X_names) - set(data_slice_dict.keys())
-        variable_explored_name = list(set(self.X_names) - set(data_slice_dict.keys()))
+            variables = list(itertools.combinations(self.X_names, r=2))
 
-        # Check if the length of the set is greater than 1
-        if len(variable_explored_name) > 1:
-            raise ValueError("The length of the set is greater than 1.")
+            # set the z axis limit
+            df_combinations = self.get_predicted_Y_for_all_level_combinations(model_path)
+            y_axis_max = df_combinations[self.Y_name].max() * 1.2
+            y_axis_min = df_combinations[self.Y_name].min() * 0.8
 
 
+            # convert to sets to extract variable compared and fixed
+            variables_fixed_set = set(data_slice_dict.keys())
+            variable_explored_set = set(self.X_names) - set(data_slice_dict.keys())
+            variable_explored_name = list(set(self.X_names) - set(data_slice_dict.keys()))
 
-        # convert to dicts for population
-        variables_fixed = {element: None for element in variables_fixed_set}
-        variable_explored = {element: None for element in variable_explored_name}
-
-        # assign an array to the variables compared for the purpose of creating the meshes
-        for variable in variable_explored:
-
-            variable_explored[variable] = np.linspace(self.X_true[variable].min(), self.X_true[variable].max(), 100)
-
-
-        # assign arrays for variables fixed
-        for variable in variables_fixed:
-            variables_fixed[variable] = np.full(
-                variable_explored[variable_explored_name[0]].shape,
-                fill_value = data_slice_dict[variable]
-            )
-        
+            # Check if the length of the set is greater than 1
+            if len(variable_explored_name) > 1:
+                raise ValueError("The length of the set is greater than 1.")
 
 
-        ##### this is where we iterate over the fixed variables levels to generate each subplot.
-        # in order to create every possible slice, we fix one variable whilst we iterate over the over.
-        # this one fixes the root variable
+
+            # convert to dicts for population
+            variables_fixed = {element: None for element in variables_fixed_set}
+            variable_explored = {element: None for element in variable_explored_name}
+
+            # assign an array to the variables compared for the purpose of creating the meshes
+            for variable in variable_explored:
+
+                variable_explored[variable] = np.linspace(self.X_true[variable].min(), self.X_true[variable].max(), 100)
 
 
-        # Create input data
-        # combine both dictionaries
-        all_variables_dict = {**variable_explored, **variables_fixed}
-        # sort to match the order of the variables in the model.
-        all_variables_dict = {key: all_variables_dict[key] for key in self.X_names}
-
-        # unpack the flattened arrays and build a tuple
-        flattened_grids = tuple([variable_dict for variable_name, variable_dict in all_variables_dict.items()])
-
-        # stack the flattened arrays columnwise
-        input_data = np.column_stack(flattened_grids)
-
-        # put in df to give feature names
-        input_data = pd.DataFrame(input_data, columns = self.X_names)
-
-        ## generate feature matrix
-        feature_matrix = generate_feature_matrix(input_data, self.model_terms)
-
-        # Reorder feature_matrix columns to match X_true_feature_matrix - the training data
-        feature_matrix = feature_matrix[list(self.X_true_feature_matrix.columns)]
-
-        # Predict the outputs using the trained model
-        predicted_output = self.predict(feature_matrix).to_numpy()
-
-        plotting_data = input_data.copy()
-        plotting_data[self.Y_name] = predicted_output
+            # assign arrays for variables fixed
+            for variable in variables_fixed:
+                variables_fixed[variable] = np.full(
+                    variable_explored[variable_explored_name[0]].shape,
+                    fill_value = data_slice_dict[variable]
+                )
 
 
-        # plot
 
-        # Create a figure with subplots
-        fig = plt.figure(figsize=(5, 4.5))
-        fontsize = 20
-
-        # begin plot
-        ax = fig.add_subplot(111)
+            ##### this is where we iterate over the fixed variables levels to generate each subplot.
+            # in order to create every possible slice, we fix one variable whilst we iterate over the over.
+            # this one fixes the root variable
 
 
-        # Create the lineplot
-        sns.lineplot(
-            data = plotting_data,
-            x = variable_explored_name[0],
-            y = self.Y_name,
-            color = "black",
-            linewidth = 2,
-            ax=ax
-            
-            )
+            # Create input data
+            # combine both dictionaries
+            all_variables_dict = {**variable_explored, **variables_fixed}
+            # sort to match the order of the variables in the model.
+            all_variables_dict = {key: all_variables_dict[key] for key in self.X_names}
+
+            # unpack the flattened arrays and build a tuple
+            flattened_grids = tuple([variable_dict for variable_name, variable_dict in all_variables_dict.items()])
+
+            # stack the flattened arrays columnwise
+            input_data = np.column_stack(flattened_grids)
+
+            # put in df to give feature names
+            input_data = pd.DataFrame(input_data, columns = self.X_names)
+
+            ## generate feature matrix
+            feature_matrix = generate_feature_matrix(input_data, self.model_terms)
+
+            # Reorder feature_matrix columns to match X_true_feature_matrix - the training data
+            feature_matrix = feature_matrix[list(self.X_true_feature_matrix.columns)]
+
+            # Predict the outputs using the trained model
+            predicted_output = self.predict(feature_matrix).to_numpy()
+
+            plotting_data = input_data.copy()
+            plotting_data[self.Y_name] = predicted_output
 
 
-        # plot ground truth
+            # plot
 
-        # grab the values for slicing
-        # import model_config 
-        model_config_dict = json.load(open(model_path + "/model_config.json", "r"))
+            # Create a figure with subplots
+            fig = plt.figure(figsize=(5, 4.5))
+            fontsize = 20
 
-        # combine real x with real y
-        full_real_data = pd.concat([self.X_true, self.Y_true], axis=1)
-
-        # slice data to get the data points where the fixed variable is the same.                    
-        real_data_slice = full_real_data.copy()
-        # iterate over the fixed variables slicing the data to the mid points
-        for fixed_variable in data_slice_dict.keys():
-
-            real_data_slice = real_data_slice[
-                real_data_slice[fixed_variable] == data_slice_dict[fixed_variable]
-            ]
-
-        # make sure x and y are the same as the model grid
-        x_real_data = real_data_slice[variable_explored_name[0]]
-        y_real_data = real_data_slice[self.Y_name]
-        # extract the y data
-        
-        #plot
-        ax.scatter(
-            x_real_data,
-            y_real_data,
-            color = "red",
-            marker = "o",
-            s=180,  # Increase the size a bit more, adjust as needed
-            alpha=0.5  # Adjust opacity here, less than 1 makes it more transparent
-            )
+            # begin plot
+            ax = fig.add_subplot(111)
 
 
-        ### axis limits
-        ax.set_xlim(
-            xmin = self.X_true[variable_explored_name[0]].min() - (self.X_true[variable_explored_name[0]].mean() / 5),
-            xmax = self.X_true[variable_explored_name[0]].max() + (self.X_true[variable_explored_name[0]].mean() / 5),
-            )
-        ax.set_ylim(
-            ymin = self.Y_true.min() - (self.Y_true.mean() / 5),
-            ymax = self.Y_true.max() + (self.Y_true.mean() / 5),
-            )
+            # Create the lineplot
+            sns.lineplot(
+                data = plotting_data,
+                x = variable_explored_name[0],
+                y = self.Y_name,
+                color = "black",
+                linewidth = 2,
+                ax=ax
 
-        # axis labels
-        ax.set_xlabel(variable_explored_name[0] + " ("+ design_parameters_dict["Variables"][variable_explored_name[0]]["Units"] + ")", fontsize = fontsize)
-        ax.set_ylabel(self.Y_name + " (" + design_parameters_dict["Response_Variables"][self.Y_name]["Units"]+")", fontsize = fontsize)
-        
-
-        y_ceil = math.ceil(self.Y_true.max() / 10) * 10
-        ax.set_yticks(list(np.linspace(0,y_ceil, 3)))
-        ax.tick_params(axis='y', labelsize=20)
+                )
 
 
-        x_ceil = math.ceil(self.X_true[variable_explored_name[0]].max() / 10) * 10
-        ax.set_xticks(np.unique(x_real_data))
-        ax.tick_params(axis='x', labelsize=20)
+            # plot ground truth
 
-        ## save
+            # grab the values for slicing
+            # import model_config
+            model_config_dict = json.load(open(model_path + "/model_config.json", "r"))
 
-        plt.tight_layout(rect=[0, 0.02, 1, 0.98])  # Adjust the rect to prevent overlap with the title and legend
-        plt.savefig(model_path + "individual_slices/"+experiment_description+".png")
-        plt.savefig(model_path + "individual_slices/"+experiment_description+".svg", format="svg")
+            # combine real x with real y
+            full_real_data = pd.concat([self.X_true, self.Y_true], axis=1)
 
-        plt.close()
+
+            # slice data to get the data points where the fixed variable is the same.
+            real_data_slice = full_real_data.copy()
+            # iterate over the fixed variables slicing the data to the mid points
+            for fixed_variable in data_slice_dict.keys():
+
+                real_data_slice = real_data_slice[
+                    real_data_slice[fixed_variable] == data_slice_dict[fixed_variable]
+                ]
+
+
+            # make sure x and y are the same as the model grid
+            x_real_data = real_data_slice[variable_explored_name[0]]
+            y_real_data = real_data_slice[self.Y_name]
+            # extract the y data
+
+            #plot
+            ax.scatter(
+                x_real_data,
+                y_real_data,
+                color = "red",
+                marker = "o",
+                s=180,  # Increase the size a bit more, adjust as needed
+                alpha=0.5  # Adjust opacity here, less than 1 makes it more transparent
+                )
+
+
+            ### axis limits
+            # ax.set_xlim(
+            #     xmin = self.X_true[variable_explored_name[0]].min() - (self.X_true[variable_explored_name[0]].mean() / 5),
+            #     xmax = self.X_true[variable_explored_name[0]].max() + (self.X_true[variable_explored_name[0]].mean() / 5),
+            #     )
+            ax.set_ylim(
+                ymin = self.Y_true.min() - (self.Y_true.mean() / 5),
+                ymax = self.Y_true.max() + (self.Y_true.mean() / 5),
+                )
+
+
+
+            # axis labels
+            ax.set_xlabel(variable_explored_name[0] + " ("+ design_parameters_dict["Variables"][variable_explored_name[0]]["Units"] + ")", fontsize = fontsize)
+            ax.set_ylabel(f"{self.Y_name} ({design_parameters_dict['Response_Variables'][self.Y_name]['Units']})", fontsize = fontsize)
+
+            y_ceil = np.round(self.Y_true.max(),1)
+            #y_ceil = math.ceil(self.Y_true.max() / 10) * 10
+            ax.set_yticks(list(np.linspace(0,y_ceil, 3)))
+            ax.tick_params(axis='y', labelsize=20)
+
+            x_ceil = math.ceil(self.X_true[variable_explored_name[0]].max() / 10) * 10
+            ax.set_xticks(np.unique(x_real_data))
+            ax.tick_params(axis='x', labelsize=20)
+
+            ## save
+
+            plt.tight_layout(rect=[0, 0.02, 1, 0.98])  # Adjust the rect to prevent overlap with the title and legend
+            plt.savefig(model_path + "individual_slices/"+experiment_description+".png")
+            plt.savefig(model_path + "individual_slices/"+experiment_description+".svg", format="svg")
+
+            plt.close()

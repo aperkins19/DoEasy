@@ -42,15 +42,6 @@ plot_args = model_config_dict["plot_args"]
 
 
 # all individual plots
-print()
-print("Surface Plots")
-
-model.get_all_surface_plots(
-    experiment_description,
-    model_path,
-    project_path,
-    plot_args = plot_args
-    )
 
 print()
 print("Contour Plots")
