@@ -1,0 +1,108 @@
+{
+    "Experiment_Name": "Placeholder_Name",
+    "Design_Type": "Plackett_Burman",
+    "Randomise": 0,
+    "Technical_Replicates" : 3,
+    "Well_Spacing": 1,
+    "Variables": {
+        "X1":{
+            "Type": "Continuous",
+            "Max": 12,
+            "Min": 4,
+            "Units": "mM"
+        },
+        "X2":{
+            "Type": "Continuous",
+            "Max": 130.0,
+            "Min": 80.0,
+            "Units": "mM"
+        },
+        "X3":{
+            "Type": "Continuous",
+            "Max": 130.0,
+            "Min": 80.0,
+            "Units": "mM"
+        },
+        "X4":{
+            "Type": "Continuous",
+            "Max": 130.0,
+            "Min": 80.0,
+            "Units": "mM"
+        },
+        "X5":{
+            "Type": "Continuous",
+            "Max": 130.0,
+            "Min": 80.0,
+            "Units": "mM"
+        },
+        "X6":{
+            "Type": "Continuous",
+            "Max": 130.0,
+            "Min": 80.0,
+            "Units": "mM"
+        },
+        "X7":{
+            "Type": "Continuous",
+            "Max": 130.0,
+            "Min": 80.0,
+            "Units": "mM"
+        },
+        "X8":{
+            "Type": "Continuous",
+            "Max": 130.0,
+            "Min": 80.0,
+            "Units": "mM"
+        },
+        "X9":{
+            "Type": "Continuous",
+            "Max": 130.0,
+            "Min": 80.0,
+            "Units": "mM"
+        },
+        "X10":{
+            "Type": "Continuous",
+            "Max": 1.5,
+            "Min": 0.5,
+            "Units": "mM"
+        },
+        "X11":{
+            "Type": "Continuous",
+            "Max": 130.0,
+            "Min": 80.0,
+            "Units": "mM"
+        },
+        "X12":{
+            "Type": "Continuous",
+            "Max": 130.0,
+            "Min": 80.0,
+            "Units": "mM"
+        },
+        "X13":{
+            "Type": "Continuous",
+            "Max": 130.0,
+            "Min": 80.0,
+            "Units": "mM"
+        },
+        "14":{
+            "Type": "Continuous",
+            "Max": 130.0,
+            "Min": 80.0,
+            "Units": "mM"
+        },
+        "X15":{
+            "Type": "Continuous",
+            "Max": 1.5,
+            "Min": 0.5,
+            "Units": "mM"
+        }
+    },
+    "Response_Variables": {
+        "Y1":{
+            "Type": "Continuous",
+            "Units": ""
+        }
+    },
+
+    "Reference_Condition": ""
+    
+}

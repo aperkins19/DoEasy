@@ -4,7 +4,7 @@
     "Randomise": 0,
     "Technical_Replicates" : 3,
     "Well_Spacing": 1,
-    "Generate_Validation_Points" : 0,
+    "Generate_Validation_Points" : 1,
     "Variables": {
         "X1":{
             "Type": "Continuous",

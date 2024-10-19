@@ -5,11 +5,6 @@
 # Ubuntu version 20.04
 FROM ubuntu:20.04
 
-# Overwrites the R installation questions 
-ENV DEBIAN_FRONTEND noninteractive
-
-# Specifies R version
-ENV R_BASE_VERSION=4.0.0
 
 # Update Ubuntu and install packages
 RUN apt-get update && \
@@ -17,8 +12,6 @@ RUN apt-get update && \
     nano \
     software-properties-common
     
-# Installs R
-RUN apt-get install -y gnupg2
 
 RUN apt-get install -y libcairo2-dev
 
