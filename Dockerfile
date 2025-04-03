@@ -51,6 +51,10 @@ RUN apt-get install -y jq
 USER root
 
 
+RUN umask 000
+RUN chmod -R 777 /app
+
+
 WORKDIR /app/
 
 # Runs Streamlit Notebook on startup

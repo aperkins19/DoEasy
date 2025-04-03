@@ -17,7 +17,7 @@ project_menu() {
 
         # get params
         option_counter=4
-        preprocessing_option_available=true
+        preprocessing_option_available=false
         analysis_menu_option_available=false
         # get design type
         designtype=$(jq -r '.Design_Type' $chosen_dir/design_parameters.json)
@@ -73,6 +73,10 @@ project_menu() {
         fi
 
         echo -e "\n"
+        # echo "DEBUG: option_counter=$option_counter"
+        # echo "DEBUG: preprocessing_option_available=$preprocessing_option_available"
+        # echo "DEBUG: analysis_menu_option_available=$analysis_menu_option_available"
+
         echo "$option_counter. Return to Project Selection"
         read -p "Enter choice [1-$option_counter]: " projectmenuchoice
 
