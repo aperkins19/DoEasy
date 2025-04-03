@@ -4,7 +4,7 @@ Welcome to DoEasy, an open-source, free to use Design of Experiments platform.
 Please feel free to use for academic purposes and cite this repo if you do.
 Contact for commerical use: alexperkssynbio@gmail.com
 
-## Installation and Usage
+## Installation and Startup
 
 
 ### Docker
@@ -30,3 +30,28 @@ n.b. First, docker will build the image, this may take a few minutes. When it is
 
 4. From within the docker container, run software:
 `bash platform.sh`
+
+
+# Docs
+
+## Introduction
+
+DoEasy  is an interactive, menu-driven tool that allows users to configure, generate, and analyze experimental designs through a series of nested Bash menus. Users can upload raw data, preprocess it, and perform statistical analyses based on the chosen design type. This guide provides step-by-step instructions on how to navigate and use the platform effectively.
+
+## Navigating the Menus
+
+Each menu prompts the user to enter a numeric choice corresponding to an available option. Entering an invalid choice will prompt an error message and a re-display of the menu options.
+
+For example:
+
+
+`
+What would you like to do:
+
+1. Configure Experiment Parameters
+2. Generate Design
+3. Upload .CSV File of Raw Data
+4. Conduct Preprocessing
+5. Return to Project Selection
+Enter choice [1-5]:
+`
